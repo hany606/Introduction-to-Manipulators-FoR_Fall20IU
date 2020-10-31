@@ -12,4 +12,5 @@
     roslaunch assignment1_ros snake.launch
     cd ~/catkin_ws
     catkin_make && source devel/setup.zsh   
+    ln -s ~/repos/FoR_Fall20IU/assignment1_ros ~/catkin_ws/src/assignment1_ros     
 ```
