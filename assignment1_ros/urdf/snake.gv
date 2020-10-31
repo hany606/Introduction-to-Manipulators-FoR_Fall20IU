@@ -1,0 +1,38 @@
+digraph G {
+node [shape=box];
+"tail" [label="tail"];
+"joint_cylinder1" [label="joint_cylinder1"];
+"link1" [label="link1"];
+"joint_cylinder2" [label="joint_cylinder2"];
+"link2" [label="link2"];
+"joint_cylinder3" [label="joint_cylinder3"];
+"link3" [label="link3"];
+"joint_cylinder4" [label="joint_cylinder4"];
+"link4" [label="link4"];
+"joint_cylinder5" [label="joint_cylinder5"];
+"link5" [label="link5"];
+"head" [label="head"];
+node [shape=ellipse, color=blue, fontcolor=blue];
+"tail" -> "joint_fixed1" [label="xyz: 0 0.26 0.15 \nrpy: 0 -0 0"]
+"joint_fixed1" -> "joint_cylinder1"
+"joint_cylinder1" -> "joint1" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"joint1" -> "link1"
+"link1" -> "joint_fixed2" [label="xyz: 0 0.82 0 \nrpy: 0 -0 0"]
+"joint_fixed2" -> "joint_cylinder2"
+"joint_cylinder2" -> "joint2" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"joint2" -> "link2"
+"link2" -> "joint_fixed3" [label="xyz: 0 0.82 0 \nrpy: 0 -0 0"]
+"joint_fixed3" -> "joint_cylinder3"
+"joint_cylinder3" -> "joint3" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"joint3" -> "link3"
+"link3" -> "joint_fixed4" [label="xyz: 0 0.82 0 \nrpy: 0 -0 0"]
+"joint_fixed4" -> "joint_cylinder4"
+"joint_cylinder4" -> "joint4" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"joint4" -> "link4"
+"link4" -> "joint_fixed5" [label="xyz: 0 0.82 0 \nrpy: 0 -0 0"]
+"joint_fixed5" -> "joint_cylinder5"
+"joint_cylinder5" -> "joint5" [label="xyz: 0 0 0 \nrpy: 0 -0 0"]
+"joint5" -> "link5"
+"link5" -> "joint_fixed_start" [label="xyz: 0 0.9 0 \nrpy: 0 -0 0"]
+"joint_fixed_start" -> "head"
+}

@@ -1,0 +1,168 @@
+<?xml version="1.0"?>
+
+<robot name="snake" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <xacro:property name="joint_diam" value="0.3" />
+    <xacro:property name="link_len" value="0.5" />
+    <xacro:property name="pi" value="3.1415" />
+
+
+    <material name="blue">
+        <color rgba="0 0 1 1"/>
+    </material>
+
+    <material name="green">
+        <color rgba="0 1 0 1"/>
+    </material>
+
+    <material name="black">
+        <color rgba="0 0 0 1"/>
+    </material>
+
+    <material name="white">
+        <color rgba="1 1 1 1"/>
+    </material>
+
+    <xacro:macro name="default_inertial" params="mass">
+        <inertial>
+        <mass value="${mass}" />
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+        </inertial>
+    </xacro:macro>
+
+    <link name="tail">
+        <visual>
+            <geometry>
+                <box size="0.2 0.2 0.2"/>
+            </geometry>
+            <origin rpy="0 0 0" xyz="0 0 ${joint_diam/2}"/>
+            <material name="black"/>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="0.2 0.2 0.2"/>
+            </geometry>      
+            <origin rpy="0 0 0" xyz="0 0 ${joint_diam/2}"/>
+        </collision>
+        <xacro:default_inertial mass="1"/>
+    </link>
+
+
+    <xacro:macro name="extra_link" params="num parent z:=0 y:=${(link_len+joint_diam)+0.01}">
+
+        <joint name="joint_fixed${num}" type="fixed">
+            <parent link="${parent}"/>
+            <child link="joint_cylinder${num}"/>
+            <origin rpy="0 0 0" xyz="0 ${y+0.01} ${z}"/>
+        </joint>
+
+        <link name="joint_cylinder${num}">
+            <visual>
+                <geometry>
+                    <cylinder length="0.4" radius="${joint_diam/2}"/>
+                </geometry>
+                <origin rpy="0 ${pi/2} 0" xyz="0 0 0"/>
+                <material name="blue"/>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder length="0.4" radius="${joint_diam/2}"/>
+                </geometry>      
+                <origin rpy="0 ${pi/2} 0" xyz="0 0 0"/>
+            </collision>
+            <xacro:default_inertial mass="1"/>
+        </link>
+
+        <joint name="joint${num}" type="revolute">
+            <parent link="joint_cylinder${num}"/>
+            <child link="link${num}"/>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <axis xyz="1 0 0"/>
+            <dynamics damping="0.0" friction="0.0"/>
+            <limit effort="40" velocity="2" lower="-2" upper="2" />
+        </joint>
+
+
+        <link name="link${num}">
+            <visual>
+                <geometry>
+                    <box size="0.2 ${link_len} 0.2"/>
+                </geometry>
+                <origin rpy="0 0 0" xyz="0 ${link_len/2+joint_diam/2+0.01} 0"/>
+                <material name="white"/>
+            </visual>
+            <collision>
+                <geometry>
+                    <box size="0.2 ${link_len} 0.2"/>
+                </geometry>      
+                <origin rpy="0 0 0" xyz="0 ${link_len/2+joint_diam/2+0.01} 0"/>
+            </collision>
+            <xacro:default_inertial mass="1"/>
+        </link>
+
+        <!-- This block provides the simulator (Gazebo) with information on a few additional
+        physical properties. See http://gazebosim.org/tutorials/?tut=ros_urdf for more-->
+        <gazebo reference="link${num}">
+            <mu1 value="200.0"/>
+            <mu2 value="100.0"/>
+            <kp value="10000000.0" />
+            <kd value="1.0" />
+            <material>Gazebo/Grey</material>
+        </gazebo>
+
+        <!-- This block connects the wheel joint to an actuator (motor), which informs both
+        simulation and visualization of the robot -->
+        <transmission name="joint${num}_trans">
+            <type>transmission_interface/SimpleTransmission</type>
+            <actuator name="joint${num}_motor">
+                <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+                <mechanicalReduction>1</mechanicalReduction>
+            </actuator>
+            <joint name="joint${num}">
+                <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            </joint>
+        </transmission>
+
+    </xacro:macro>
+
+    <xacro:extra_link num="1" parent="tail" z="${joint_diam/2}" y="${(0.1+joint_diam/2)}"/>
+    <xacro:extra_link num="2" parent="link1"/>
+    <xacro:extra_link num="3" parent="link2"/>
+    <xacro:extra_link num="4" parent="link3"/>
+    <xacro:extra_link num="5" parent="link4"/>
+
+
+
+    <joint name="joint_fixed_start" type="fixed">
+        <parent link="link5"/>
+        <child link="head"/>
+        <origin rpy="0 0 0" xyz="0 ${joint_diam/2 + link_len+0.05+0.2} 0 "/>
+    </joint>
+
+    <link name="head">
+        <visual>
+            <geometry>
+                <sphere radius="0.2"/>
+            </geometry>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <material name="green"/>
+        </visual>
+        <collision>
+            <geometry>
+                <sphere radius="0.2"/>
+            </geometry>      
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+        </collision>
+        <xacro:default_inertial mass="1"/>
+    </link>
+
+
+
+  <!-- Gazebo plugin for ROS Control -->
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/snake</robotNamespace>
+    </plugin>
+  </gazebo>
+
+</robot>
