@@ -1,0 +1,99 @@
+## An example of kinematics diagram for a 6-DOF robot arm
+## 
+## Author : Alex Dumitrache <alex@cimr.pub.ro>
+## License: GPL
+
+def blue<>
+input{lib/defaults.sk}
+input{lib/objects.sk}
+
+def J1 0
+def J2 -90
+def J3 180
+def J4 0
+def J5 90
+def J6 90
+
+def arrowarc 
+{
+    sweep [style=thick]{215, rotate(1, [Z])} (1,0)
+    def p1 (1,0) then rotate(210, [Z])
+    def p2 (1,0) then rotate(210+30, [Z])
+    line [style=thick, style=->] (p1)(p2)
+}
+
+% The main drawing
+put {scale(0.5)}
+{   
+    # base
+    put {scale(1)}
+    {
+        put{scale([8,8,0.5])}{box}
+        put{scale(1.5) * translate([0,0,0.2])}
+        {
+            {coordsys}
+            special |\path #1 node[left] {$Z_0$}
+                           #2 node[below] {$X_0$}
+                           #3 node[right] {$Y_0$};|(z)(x)(y)(o)
+        }   
+
+        put {translate([0,0,4]) * rotate(135, [Z])}{arrowarc}
+        special|\node[right] at #1 {$\theta_1$};|(1,0,4)
+    
+    
+        line [style=dashed] (0,0,0.2)(0,0,6)
+
+        # link1
+        put {translate([0,0,2]) * rotate(J1, [Z])}
+        {
+            put{scale([1,1,3])}{cylinder}
+
+            put{translate([0,0,-3]) * rotate(0, [X])}
+            {
+                put{scale([2.5,2.5,2.5])}
+                {
+                    {coordsys}
+                    special |\path #1 node[above] {$Z_1$}
+                                   #2 node[right] {$X_1$}
+                                   #3 node[right] {$Y_1$};|(z)(x)(y)(o)
+                }
+            }
+
+        put {translate([0,0,4]) * rotate(135, [Z])}{arrowarc}
+        special|\node[right] at #1 {$\theta_1$};|(1,0,4)
+    
+    
+        line [style=dashed] (0,0,0)(0,0.5,0)
+
+        # link2
+        put {translate([0,0,2]) * rotate(J1, [Z])}
+        {
+            put{scale([1,1,3])}{cylinder}
+
+            put{translate([0,0,-3]) * rotate(0, [X])}
+            {
+                put{scale([2.5,2.5,2.5])}
+                {
+                    {coordsys}
+                    special |\path #1 node[above] {$Z_1$}
+                                   #2 node[right] {$X_1$}
+                                   #3 node[right] {$Y_1$};|(z)(x)(y)(o)
+                }
+            }
+
+
+        }
+
+        }
+    }
+}
+
+
+
+global 
+{ 
+    language tikz 
+    camera rotate(0, (1,0,0)) * view((1.5,2,1),(0,0,0),[0,0,1]) * rotate(110, (0,0,1))
+}
+
+
