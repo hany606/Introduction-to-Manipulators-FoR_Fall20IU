@@ -83,7 +83,7 @@ if __name__ == "__main__":
     robot = KUKA_KR10_R1100_2()
     q = np.zeros((6,))
     q[1] = -np.pi/4
-    q = [2, -np.pi/4, 0,    0, 1, 0]
+    q = [0, np.pi/4, 0,    1, 1, 0]
     T = robot.forward_kinematics(q, debug=False)
     # robot.print_frame(T)
     q_calc = robot.inverse_kinematics(T)

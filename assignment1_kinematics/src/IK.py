@@ -36,7 +36,8 @@ def IK(T, T_base=None, T_tool=None, m=-1, debug=True):
     # The denominator is always positive, thus, the sign of the angle determined with the numerator
     # using np.round: as (x_dash**2+y_dash**2-l1_dash**2-l2_dash**2)/(2*l1_dash*l2_dash) makes some problems in range due to approximation, e.g. 1.0000000000000004 ~ 1
     q[2] = np.arccos(np.round(x_dash**2+y_dash**2-l1_dash**2-l2_dash**2,6)/(2*l1_dash*l2_dash))
-    q[1] = -m * np.arctan((l2_dash*np.sin(q[1]))/(l1_dash+l2_dash)) + np.arctan(y_dash/x_dash)
+    m = np.sign(q[2])
+    q[1] = -m * np.arctan((l2_dash*np.sin(q[2]))/(l1_dash+l2_dash*np.cos(q[2]))) + np.arctan(y_dash/x_dash)
     # Check condition of singularity and get q1
     singularity_condition1 = l[1] + l[2]*np.cos(q[1]) + (l[3]+l[4])*np.cos(q[1]+q[2])
     if(singularity_condition1 == 0):
