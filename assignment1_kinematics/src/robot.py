@@ -9,9 +9,9 @@ class KUKA_KR10_R1100_2:
 
 
     def print_frame(self, f):
-        print(f)
-        print("Rotation: ", get_rotation(f))
-        print("Position: ", get_position(f)) 
+        print(f"Homogeneous Matrix:\n{f}")
+        print("Rotation:\n", get_rotation(f))
+        print("Position:\n", get_position(f)) 
 
     def print_frames(self, frames):
         print(f"Note: Frame #0 -> World\n Frame #{len(frames)-2} -> End Effector\n Frame #{len(frames)-1} -> Tool")
@@ -46,7 +46,7 @@ class KUKA_KR10_R1100_2:
 
         # We need only to return the end-effector
         if(not(plot or debug) == True):
-            print(T)    # only end_effector
+            # print(T)    # only end_effector
             return T
         return T[-1]    # end_effector
 
@@ -64,7 +64,7 @@ class KUKA_KR10_R1100_2:
             print(status)
 
         if(not debug == True):
-            print(q)
+            # print(q)
             return q
 
         return q
@@ -76,21 +76,25 @@ class KUKA_KR10_R1100_2_configs:
 
     @staticmethod
     def get_joints_limits():
-        return [(-170, 170), (-190, 45), (-120, 156), (-185, 185), (-120, 120), (-350, 350)]
-
+        deg = [(-170, 170), (-190, 45), (-120, 156), (-185, 185), (-120, 120), (-350, 350)]
+        rad = []
+        for (i,j) in deg:
+            rad.append(((i*np.pi/180), (j*np.pi/180)))
+        return rad
 
 if __name__ == "__main__":
+    # print(KUKA_KR10_R1100_2_configs.get_joints_limits())
     robot = KUKA_KR10_R1100_2()
     q = np.zeros((6,))
-    q[1] = -np.pi/4
-    q = [0, np.pi/4, 0,    1, 1, 0]
+    # q[1] = -np.pi/4
+    # q = [0, np.pi/4, 0,    1, 1, 0]
     T = robot.forward_kinematics(q, debug=False)
+    # # robot.print_frame(T)
+    # q_calc = robot.inverse_kinematics(T)
+    # T_calc = robot.forward_kinematics(q_calc, debug=False)
+
+    # print(q, q_calc)
     # robot.print_frame(T)
-    q_calc = robot.inverse_kinematics(T)
-    T_calc = robot.forward_kinematics(q_calc, debug=False)
+    # robot.print_frame(T_calc)
 
-    print(q, q_calc)
-    robot.print_frame(T)
-    robot.print_frame(T_calc)
-
-    print(f"Error using FK then IK then FK -> {calc_error(T, T_calc)}")
+    # print(f"Error using FK then IK then FK -> {calc_error(T, T_calc)}")

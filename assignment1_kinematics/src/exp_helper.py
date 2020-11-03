@@ -81,6 +81,7 @@ print(T_456[2,:3])
 
 
 
+print(sp.printing.latex(T_456))
 
 # q1, q2, q3, q4, q5, q6 = 0,0,0,0,0,0
 # l1, l2, l3, l4, l5, l6 = 0,0,0,0,0,0
