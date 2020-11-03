@@ -1,5 +1,5 @@
 <launch>
-  <rosparam command="load" file="$(find assignment1_ros)/config/snake.yaml"/>
+  <rosparam command="load" file="$(find assignment2_ros)/config/snake.yaml"/>
 
   <!-- load the controllers -->
   <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"

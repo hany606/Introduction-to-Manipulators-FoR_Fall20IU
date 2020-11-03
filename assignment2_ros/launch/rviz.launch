@@ -2,9 +2,9 @@
 
   <arg name="model" default="snake.urdf.xacro"/>
   <arg name="use_gui" default="true" />
-  <arg name="rvizconfig" default="$(find assignment1_ros)/rviz/urdf.rviz" />
+  <arg name="rvizconfig" default="$(find assignment2_ros)/rviz/urdf.rviz" />
 
-  <param name="robot_description" command="$(find xacro)/xacro $(find assignment1_ros)/urdf/$(arg model)" />
+  <param name="robot_description" command="$(find xacro)/xacro $(find assignment2_ros)/urdf/$(arg model)" />
 
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
     <param name="use_gui" value="TRUE"/>
