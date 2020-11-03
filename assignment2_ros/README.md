@@ -24,17 +24,17 @@ If ros-melodic-effort-controllers is not installed, you should install it:
 
 * To run only the robot in rviz
 ```bash
-    roslaunch assignment1_ros rviz.launch model:=snake.urdf.xacro
+    roslaunch assignment2_ros rviz.launch model:=snake.urdf.xacro
 ```
 
 * To run only the robot in Gazebo without controller
 ```bash
-    roslaunch assignment1_ros gazebo.launch model:=snake.urdf.xacro
+    roslaunch assignment2_ros gazebo.launch model:=snake.urdf.xacro
 ```
 
 * To run the robot in rviz and Gazeob and use the poition controller
 ```bash
-    roslaunch assignment1_ros snake.launch
+    roslaunch assignment2_ros snake.launch
 ```
 
 
