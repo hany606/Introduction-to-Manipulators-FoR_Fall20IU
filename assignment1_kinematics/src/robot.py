@@ -1,4 +1,5 @@
 from utils import *
+import visualization as visual
 class KUKA_KR10_R1100_2:
     def __init__(self, T_base=None, T_tool=None):
         self.links_dimensions = KUKA_KR10_R1100_2_configs.get_links_dimensions()
@@ -32,18 +33,46 @@ class KUKA_KR10_R1100_2:
         for i, angle in enumerate(q):
             print(f"Joint #{i+1}: {angle} rad ---> {angle*180/np.pi} degrees")
 
-    def plot_robot(self, frames):
-        pass
+    def plot_robot(self, T):
+        vis = visual.RobotVisualization_vpython(rate=10, scale=0.0005)
+        frame = []
+        links = []
+        joints = []
+        node = get_position(T[-1])
+        for i in range(1,len(T)):
+            links.append((get_position(T[i-1]), get_position(T[i])))
+            joints.append(get_position(T[i]))
+        for i, l in enumerate(links):
+            if(i == 1): # because of the physical shift without link (if I was using DH it would be much easier)
+                p1 = l[0]
+                p2 = l[1]
+                p1_1 = p1
+                p2_1 = p2
+                p2_2 = p2
+                p2_1[0] = 0.0
+                p1_2 = p2_1
+                frame.append(["link", p1_1, p2_1])
+                frame.append(["link", p1_2, p2_2])
 
-    def forward_kinematics(self, q, plot=True, debug=True):
+            frame.append(["link", l[0], l[1]])
+        for j in joints:
+            frame.append(["joint", j])
+        frame.append(["node", node])
+        frame.append(["time", 0, 0])
+        # print(frame)
+        while True:
+            vis.render_frame(frame)
+
+    def forward_kinematics(self, q, plot=True, debug=True, return_all=False):
         from FK import FK
-        T = FK(q, T_base=self.T_base, T_tool=self.T_tool, return_frames=(plot or debug))
+        T = FK(q, T_base=self.T_base, T_tool=self.T_tool, return_frames=(plot or debug or return_all))
         
         if(plot == True):
             self.plot_robot(T)    # plot the result
         if(debug == True):
             self.print_frames(T)    # just print the result in a good way
-
+        if(return_all == True):
+            return T
         # We need only to return the end-effector
         if(not(plot or debug) == True):
             # print(T)    # only end_effector
@@ -88,7 +117,7 @@ if __name__ == "__main__":
     q = np.zeros((6,))
     # q[1] = -np.pi/4
     # q = [0, np.pi/4, 0,    1, 1, 0]
-    T = robot.forward_kinematics(q, debug=False)
+    T = robot.forward_kinematics(q, return_all=True)
     # # robot.print_frame(T)
     # q_calc = robot.inverse_kinematics(T)
     # T_calc = robot.forward_kinematics(q_calc, debug=False)
