@@ -6,7 +6,7 @@ class RobotVisualization_vpython:
         self.rate = rate
         self.radius = radius
         self.axe_color = vp.vector(1, 1, 1)
-        self.link_color = vp.vector(1, 0.4, 0.4)
+        self.link_color = vp.vector(242/255, 92/255, 25/255)
         self.joint_color = vp.vector(1,1,1)
         self.node_color = vp.vector(0,1,0)
         self.text_color = vp.vector(0,1,0)

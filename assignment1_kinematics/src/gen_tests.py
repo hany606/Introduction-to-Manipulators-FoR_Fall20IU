@@ -63,7 +63,7 @@ def generate_likelihood_angles(num):
 
 
 # test_data_FK = generate_angels()
-# test_data_FK = generate_random_angles(10)
-test_data_FK = generate_likelihood_angles(10)
+test_data_FK = generate_random_angles(10)
+# test_data_FK = generate_likelihood_angles(10)
 print(test_data_FK)
 np.save("test_data_FK.npy", np.array(test_data_FK))
