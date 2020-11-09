@@ -2,7 +2,13 @@
 
 This package is build on ROS-Melodic. This package has a urdf for a crawling robot (Snake inspired). This crawling robot is similar to serial manipulators without base in the way of construction.
 
+![Robot visualization](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment2_ros/imgs/snake_gazebo2.gif)
+![Robot visualization](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment2_ros/imgs/snake_gazebo1.gif)
+![Robot visualization](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment2_ros/imgs/snake_rviz.gif)
+
 The initial robot has 5 revolute joints and their position controllers. The robot's joints and link can be extended by modifing ```snake.urdf.xacro``` and adding ```<xacro:extra_link num="idx" parent="idx_parent"/>```
+
+![Robot visualization](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment2_ros/imgs/rqt_nodes_graph.png)
 
 The robot is controlled with position controllers, and there is a node that publish to the topics of the controllers with values that is from scaled and shifted sin function in order to perform an oscilation move to make the snake move. The advanced way to control the snake inspired robots is by using CPG (Central Pattern Generator) that is one of the methods that was inspired from animals in both invertebrate and vertebrateanimals for  locomotion  control, it is widely used in Crawling locomotion and can be used here for serpentine gait for snake-inspired robot. Also, there is Serpenoid Curve Control function, this function is used to generatethe joint rythm in order to control the snake-inspiredrobot to perform serpentine locomotion.
 
@@ -18,17 +24,17 @@ If ros-melodic-effort-controllers is not installed, you should install it:
 
 * To run only the robot in rviz
 ```bash
-    roslaunch assignment1_ros rviz.launch model:=snake.urdf.xacro
+    roslaunch assignment2_ros rviz.launch model:=snake.urdf.xacro
 ```
 
 * To run only the robot in Gazebo without controller
 ```bash
-    roslaunch assignment1_ros gazebo.launch model:=snake.urdf.xacro
+    roslaunch assignment2_ros gazebo.launch model:=snake.urdf.xacro
 ```
 
 * To run the robot in rviz and Gazeob and use the poition controller
 ```bash
-    roslaunch assignment1_ros snake.launch
+    roslaunch assignment2_ros snake.launch
 ```
 
 
