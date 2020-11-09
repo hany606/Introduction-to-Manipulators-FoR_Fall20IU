@@ -29,9 +29,8 @@ class Jacobian:
         To_inv[:3,:3] = np.linalg.inv(T[:3,:3])
 
         dT = self.T_base_robot @ drotation_z(q[0]) @ translation_z(self.l[0]) @ translation_x(self.l[1]) @ rotation_y(q[1]) @ translation_x(self.l[2]) @ rotation_y(q[2]) @ translation_x(self.l[3]) @ rotation_x(q[3]) @ translation_x(self.l[4]) @ rotation_y(q[4]) @ rotation_x(q[5]) @ translation_x(self.l[5]) @ self.T_tool_robot @ To_inv
-        # print(dT)
         J[:,0] = self._get_jacobian_column(dT)
-        # print(J[:, 0])
+
         dT = self.T_base_robot @ rotation_z(q[0]) @ translation_z(self.l[0]) @ translation_x(self.l[1]) @ drotation_y(q[1]) @ translation_x(self.l[2]) @ rotation_y(q[2]) @ translation_x(self.l[3]) @ rotation_x(q[3]) @ translation_x(self.l[4]) @ rotation_y(q[4]) @ rotation_x(q[5]) @ translation_x(self.l[5]) @ self.T_tool_robot @ To_inv
         J[:,1] = self._get_jacobian_column(dT)
 
@@ -76,7 +75,7 @@ class Jacobian:
         return J
 
     def calc_sympolic(self, q):
-        # Just to know which method works fine from the first three elements of each jacobian -> it appeared that the numerical derivatives has a problem
+        # Just to know which method works fine from the first three elements of each jacobian -> it appeared that the numerical derivatives has a problem (fixed)
         q = q.squeeze()
         # use sympy to calculate symbolically
         def sp_translation_x(l):
