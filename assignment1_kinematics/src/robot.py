@@ -101,10 +101,10 @@ class KUKA_KR10_R1100_2:
         from FK import FK
         T = FK(q, T_base=self.T_base, T_tool=self.T_tool, return_frames=(plot or debug or return_all))
         
-        if(plot == True):
-            self.plot_robot(T)    # plot the result
         if(debug == True):
             self.print_frames(T)    # just print the result in a good way
+        if(plot == True):
+            self.plot_robot(T)    # plot the result
         if(return_all == True):
             return T
         # We need only to return the end-effector
