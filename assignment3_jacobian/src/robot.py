@@ -4,7 +4,6 @@ class KUKA_KR10_R1100_2:
     def __init__(self, T_base=None, T_tool=None):
         self.links_dimensions = KUKA_KR10_R1100_2_configs.get_links_dimensions()
         self.joint_limits = KUKA_KR10_R1100_2_configs.get_joints_limits()
-        # self.zero_config = []
         self.T_base = translation_x(0) if T_base is None else T_base
         self.T_tool = translation_x(0) if T_tool is None else T_tool
 

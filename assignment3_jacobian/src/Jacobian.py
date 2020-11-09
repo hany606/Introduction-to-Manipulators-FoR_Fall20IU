@@ -72,13 +72,14 @@ class Jacobian:
         U = []
         # z y y x y x
         u_rotation_joints_cols = [2, 1, 1, 0, 1, 0]
-        for i in range(7):
-            A0i = np.eye(4)
-            for Ai in A[:i+1]: 
-                A0i = A0i @ Ai
-            # print(A0i.shape)
-            O.append(A0i[:3,3])
-            U.append(A0i[:3, u_rotation_joints_cols[i-1]])
+        T0i = np.eye(4)
+        for i in range(6):
+            T0i = T0i @ A[i]
+            print(T0i)
+            O.append(T0i[:3,3])
+            U.append(T0i[:3, u_rotation_joints_cols[i]])
+        T0i = T0i @ A[6]
+        O.append(T0i[:3,3])
         J = np.zeros((6,6))
         for i in range(6):
             J[:3,i] = np.cross((U[i]).reshape((1,3)), (O[6] - O[i]).reshape((1,3))).T.squeeze()
@@ -95,6 +96,6 @@ if __name__ == "__main__":
     numerical = jacobian.calc_numerical(q)
     skew = jacobian.calc_skew(q)
     print(skew)
-    print(numerical)
+    # print(numerical)
 
-    print(calc_error(numerical, skew))
+    # print(calc_error(numerical, skew))
