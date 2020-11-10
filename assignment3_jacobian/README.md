@@ -20,6 +20,7 @@ In order to run the code, you must have the dependencies (numpy) and in order to
 
 ![Shoulder](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment3_jacobian/imgs/shoulder_singularity.gif)
 
+
 - Wrist Singularity:
 
 ![Wrist](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment3_jacobian/imgs/wrist%20singularity.png)
