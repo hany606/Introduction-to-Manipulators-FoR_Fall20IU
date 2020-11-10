@@ -114,7 +114,34 @@ class KUKA_KR10_R1100_2:
             return jacobian.calc_skew(q)
         elif(method == "numerical"):
             return jacobian.calc_numerical(q)
+    
+    def check_singularity(self, q, jacobian_method="numerical", singularity_method="rank", debug=True):
+        J = self.jacobian(q, method=jacobian_method)
+        singularity_flag = False
+        u, s, v = np.linalg.svd(J)
+        eps = 1e-15
 
+        if(singularity_method == "determinant"):
+            if(abs(np.linalg.det(J)) <= eps):
+                singularity_flag = True
+        
+        if(singularity_method == "SVD"):
+            if(min(s) <= eps):
+                singularity_flag = True
+        
+        if(singularity_method == "rank"):
+            if(np.linalg.matrix_rank(J) < 6):
+                singularity_flag = True
+
+        if(debug == True):
+            print("Checking Singularity ...")
+            print(f"Configuration (q): {q}")
+            # print(f"Jacobian (J): {J}")
+            print(f"SVD: s: {s}, minimum value: {min(s)}")
+            print(f"Determinant (det(J)): {np.linalg.det(J)}")
+            print(f"Rank (rank(J)): {np.linalg.matrix_rank(J)}")
+            print(f"Result: This configuration is {'a Singular' if singularity_flag == True else 'Not a Singular'}")
+        return singularity_flag
 class KUKA_KR10_R1100_2_configs:
     @staticmethod
     def get_links_dimensions():
