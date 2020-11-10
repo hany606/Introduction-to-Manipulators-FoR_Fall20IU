@@ -1,6 +1,6 @@
 # Assignment1-Kinematics
 
-This folder is for forward and inverse kinematics for KUKA KR 10 R1100-2 manipulator.
+In this directoy, Forward and Inverse kinematics for KUKA KR 10 R1100-2 manipulator is being computed.
 
 ![Robot Visualization](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment1_kinematics/imgs/robot_vis.gif)
 
