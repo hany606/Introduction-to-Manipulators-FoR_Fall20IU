@@ -31,10 +31,13 @@ class RobotVisualization_vpython:
                 v = vp.vector(*obj[1])*self.scale
                 color = self.joint_color if len(obj) <= 2 else vp.vector(*obj[2])
                 c.append(vp.sphere(pos=v, radius=self.radius["joint"], color=color))
+                # c.append(vp.box(pos=v, length=self.radius["joint"]*2, height=self.radius["joint"]*2, width=self.radius["joint"]*2, color=color))
+
             elif(shape_type == "node"):
                 v = vp.vector(*obj[1])*self.scale
                 color = self.node_color if len(obj) <= 2 else vp.vector(*obj[2])
-                c.append(vp.sphere(pos=v, radius=self.radius["node"], color=color))
+                # c.append(vp.sphere(pos=v, radius=self.radius["node"], color=color))
+                c.append(vp.box(pos=v, length=self.radius["node"]*2, height=self.radius["node"]*2, width=self.radius["node"]*2, color=color))
             elif(shape_type == "text_joint"):
                 text = str(obj[1])
                 v = vp.vector(*obj[2])*self.scale
