@@ -32,7 +32,7 @@ In order to run the code, you must have the dependencies (numpy) and in order to
 
 - Wrist Singularity:
 
-![Wrist](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment3_jacobian/imgs/wrist%20singularity.png)
+![Wrist](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment3_jacobian/imgs/wrist_singularity2.png)
 
 - Elbow Singularity:
 
