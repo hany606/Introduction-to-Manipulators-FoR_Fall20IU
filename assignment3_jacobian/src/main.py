@@ -1,6 +1,6 @@
 from robot import KUKA_KR10_R1100_2
 import numpy as np
-from utils import calc_error
+from utils import calc_error, get_position, get_rotation
 
 robot = KUKA_KR10_R1100_2()
 
@@ -33,12 +33,23 @@ print("------------------------------------------------------")
 # -------------------------- Singularities --------------------------
 # 1. Shoulder:
 print("Shoulder singularity:")
-q = [0, -np.pi/6, -1.990468423823186,0,0, 0.0] # shoulder singularity
+q = [0, -1.6154540260077814, +0.04465769921288487, 0, np.pi/6, 0.0] # shoulder singularity (1st and 4th)
 robot.check_singularity(q)
 print("------------------------------------------------------")
 # Ts = []
-# for i in range(360):
-#     q = [i*np.pi/180, -np.pi/6, -1.990468423823186,0,0, 0.0] # shoulder singularity
+# for i in range(10):
+#     q = [i*np.pi/180, -np.pi/6, -1.990468423823186, 0,0, 0.0] # shoulder singularity
+#     T = robot.forward_kinematics(q, plot=False, debug=False, return_all=True)
+#     Ts.append(T)
+# robot.plot_robot_multi_frames(Ts)
+
+print("Shoulder (Alignment) singularity:")
+q = [0, -np.pi/6, -2.2829525304720546, 0, np.pi/6, 0.0] # shoulder(Alignment) singularity (1st and 6th)
+robot.check_singularity(q)
+print("------------------------------------------------------")
+# Ts = []
+# for i in range(10):
+#     q = [i*np.pi/180, -np.pi/6, -1.990468423823186, 0,0, 0.0] # shoulder singularity
 #     T = robot.forward_kinematics(q, plot=False, debug=False, return_all=True)
 #     Ts.append(T)
 # robot.plot_robot_multi_frames(Ts)
