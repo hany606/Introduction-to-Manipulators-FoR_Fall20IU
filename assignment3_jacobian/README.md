@@ -20,6 +20,15 @@ In order to run the code, you must have the dependencies (numpy) and in order to
 
 ![Shoulder](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment3_jacobian/imgs/shoulder_singularity.gif)
 
+- Schema for shoulder singularity:
+
+![Shoulder](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment3_jacobian/imgs/shoulder_singularity.png)
+
+- Schema for alignment singularity:
+
+![alignment](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment3_jacobian/imgs/Alignment_singularity.png)
+
+
 
 - Wrist Singularity:
 
