@@ -56,7 +56,7 @@ print("------------------------------------------------------")
 
 # 2. Wrist:
 print("Wrist singularity:")
-q = [0, -np.pi/4, 0,   10*np.pi/180,0, 20*np.pi/180] # wrist
+q = [0, -np.pi/4, np.pi/3,   10*np.pi/180,0, 20*np.pi/180] # wrist
 robot.check_singularity(q)
 print("------------------------------------------------------")
 # T = robot.forward_kinematics(q, plot=True, debug=False)
