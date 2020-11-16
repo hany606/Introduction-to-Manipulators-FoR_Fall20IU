@@ -22,29 +22,51 @@ def FK(q, T_base=None, T_tool=None, return_frames=True):
     #                       rotation_x(q[5])]
 
     # Zero configuration
-    frames_transitions = [T_base_robot,
-                          rotation_z(q[0]),
-                          translation_z(l[0]) @ translation_x(l[1]) @ rotation_y(q[1]),
-                          translation_x(l[2]) @ rotation_y(q[2]),
-                          translation_x(l[3]) @ rotation_x(q[3]),
-                          translation_x(l[4]) @ rotation_y(q[4]),
-                          rotation_x(q[5])]
+    frames_transitions =  [ T_base_robot,
+                            rotation_z(q[0]) @ translation_z(l[0]) @ translation_x(l[1]),
+                            rotation_y(q[1]) @ translation_x(l[2]),
+                            rotation_y(q[2]) @ translation_x(l[3]),
+                            rotation_x(q[3]) @ translation_x(l[4]),
+                            rotation_y(q[4]),
+                            rotation_x(q[5]) @ translation_x(l[5]) @ T_tool_robot]
     
-    frames = [T_base_robot]    # the world frame
-    for i in range(1,7):
-        old_frame = frames[i-1]
-        new_frame = old_frame @ frames_transitions[i]
-        frames.append(new_frame)
+    T0i = np.eye(4,4)
+    frames = []
+    for i in range(7):
+        T0i = T0i @ frames_transitions[i]
 
-    end_effoctor = frames[-1] @ translation_x(l[5])
-    frames.append(end_effoctor)
-    tool = frames[-1] @ T_tool_robot
-    frames.append(tool)
+        frames.append(T0i)
 
     # print(len(frames))
     if(return_frames == True):
         return frames
-    return tool
+    return frames[-1]
+
+    # Old
+    #  # Zero configuration
+    # frames_transitions = [T_base_robot,
+    #                       rotation_z(q[0]),
+    #                       translation_z(l[0]) @ translation_x(l[1]) @ rotation_y(q[1]),
+    #                       translation_x(l[2]) @ rotation_y(q[2]),
+    #                       translation_x(l[3]) @ rotation_x(q[3]),
+    #                       translation_x(l[4]) @ rotation_y(q[4]),
+    #                       rotation_x(q[5])]
+    
+    # frames = [T_base_robot]    # the world frame
+    # for i in range(1,7):
+    #     old_frame = frames[i-1]
+    #     new_frame = old_frame @ frames_transitions[i]
+    #     frames.append(new_frame)
+
+    # end_effoctor = frames[-1] @ translation_x(l[5])
+    # frames.append(end_effoctor)
+    # tool = frames[-1] @ T_tool_robot
+    # frames.append(tool)
+
+    # # print(len(frames))
+    # if(return_frames == True):
+    #     return frames
+    # return tool
 
 
 if __name__ == "__main__":
