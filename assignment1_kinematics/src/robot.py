@@ -74,7 +74,8 @@ class KUKA_KR10_R1100_2:
                     links.append((get_position(T[i-1]), get_position(T[i])))
                     joints.append(get_position(T[i]))
                 for i, l in enumerate(links):
-                    if(i == 1): # because of the physical shift without link (if I was using DH it would be much easier)
+                    # i == (shift_link-1)
+                    if(i == 0): # because of the physical shift without link (if I was using DH it would be much easier)
                         p1 = l[0]
                         p2 = l[1]
                         # print(p2)
