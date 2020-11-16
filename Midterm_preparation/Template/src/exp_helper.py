@@ -1,6 +1,7 @@
 import sympy as sp
 # from math import sin, cos
 import numpy as np
+import utils as ut
 
 def print_mat(mat):
     for i in range(4):
@@ -47,18 +48,18 @@ def rotation_z(theta):
                      [0         ,0          ,0, 1]])
 
 mat = sp.Matrix
-q1, q2, q3, q4, q5, q6 = sp.symbols("q1 q2 q3 q4 q5 q6", real=True)
-l1, l2, l3, l4, l5, l6 = sp.symbols("l1 l2 l3 l4 l5 l6", real=True)
+q0, q1, q2, q3, q4, q5 = sp.symbols("q0 q1 q2 q3 q4 q5", real=True)
+l0, l1, l2, l3, l4, l5 = sp.symbols("l0 l1 l2 l3 l4 l5", real=True)
 
 # print(sp.Matrix(rotation_x(l1))*sp.Matrix(translation_y(l2)))
 
 # Kinematics is in zero configuration
-T_123 = mat(rotation_z(q1)) * mat(translation_x(l2)) * mat(rotation_y(q2)) * \
-        mat(translation_x(l3)) * mat(rotation_y(q3)) * mat(translation_x(l4)) *\
-        mat(translation_x(l5))
+T_123 = mat(rotation_z(q0)) * mat(translation_x(l1)) * mat(rotation_y(q1)) * \
+        mat(translation_x(l2)) * mat(rotation_y(q2)) * mat(translation_x(l3)) *\
+        mat(translation_x(l4))
 
 
-T_456 = mat(rotation_x(q4)) * mat(rotation_y(q5)) * mat(rotation_x(q6))
+T_456 = mat(rotation_x(q3)) * mat(rotation_y(q4)) * mat(rotation_x(q5))
 
 # print(T_123[0,1])
 
@@ -69,19 +70,35 @@ T_456 = mat(rotation_x(q4)) * mat(rotation_y(q5)) * mat(rotation_x(q6))
 # print("\n\n\n\n-------------\n\n\n\n")
 # print(T_456)
 
-print_mat(T_123)
-print(T_123[:,3])
+print("T_123")
+# print_mat(T_123)
+# print(T_123[:,3])
+ut.print_matrix(T_123)
 print("\n\n\n\n-------------\n\n\n\n")
+print("1st element of T_123 position vector")
+print(T_123[0,3])
+# print("\n\n\n\n-------------\n\n\n\n")
+print("2nd element of T_123 position vector")
+print(T_123[1,3])
+# print("\n\n\n\n-------------\n\n\n\n")
+print("3rd element of T_123 position vector")
+print(T_123[2,3])
+print("\n\n\n\n-------------\n\n\n\n")
+
+print("T_456")
 print_mat(T_456)
+print("1st row of T_456")
 print(T_456[0,:3])
 # print("\n\n\n\n-------------\n\n\n\n")
+print("2nd row of T_456")
 print(T_456[1,:3])
 # print("\n\n\n\n-------------\n\n\n\n")
+print("3rd row of T_456")
 print(T_456[2,:3])
 
 
-
-print(sp.printing.latex(T_456))
+# print("\n\n\n\n-------------\n\n\n\n")
+# print(sp.printing.latex(T_456))
 
 # q1, q2, q3, q4, q5, q6 = 0,0,0,0,0,0
 # l1, l2, l3, l4, l5, l6 = 0,0,0,0,0,0

@@ -17,6 +17,7 @@ def IK(T, T_base=None, T_tool=None, m=-1, debug=True):
     
     T_base = translation_x(0) if T_base is None else T_base
     T_tool = translation_x(0) if T_tool is None else T_tool
+    # TODO: Change
     T_o = inv(translation_z(l[0])) @ inv(T_base) @ T @ inv(T_tool) @ inv(translation_x(l[5])) #@ inv(translation_x(l[3]+l[4]))
     # print("####### DEBUG")
 

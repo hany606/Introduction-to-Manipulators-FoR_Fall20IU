@@ -21,7 +21,7 @@ def FK(q, T_base=None, T_tool=None, return_frames=True):
     #                       rotation_y(q[4]),
     #                       rotation_x(q[5])]
 
-    # Zero configuration
+    # Zero configuration TODO: Change
     frames_transitions =  [ T_base_robot,
                             rotation_z(q[0]) @ translation_z(l[0]) @ translation_x(l[1]),
                             rotation_y(q[1]) @ translation_x(l[2]),

@@ -123,3 +123,12 @@ print("######################################################")
 print(f"Number of configurations that has been calculated wrongly = {num_issues}")
 print(f"Error using FK then IK then FK for {len(gen_data_FK)} configurations-> \n Average Error: {total_err/len(gen_data_FK)} \t Total Error: {total_err}")
 print("------------------------------------------------------")
+
+### For Plotting all the test_data
+Ts = []
+for i,q_data in enumerate(gen_data_FK):
+    q = q_data
+    T = robot.forward_kinematics(q, plot=False, debug=False, return_all=True)
+    Ts.append(T)
+
+robot.plot_robot_multi_frames(Ts)
