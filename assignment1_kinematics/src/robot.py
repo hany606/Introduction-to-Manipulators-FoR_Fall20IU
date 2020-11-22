@@ -149,9 +149,9 @@ if __name__ == "__main__":
     q = np.zeros((6,))
     # q[1] = -np.pi/4
     # q = [0, np.pi/4, 0,    1, 1, 0]
-    T = robot.forward_kinematics(q, return_all=True)
+    # T = robot.forward_kinematics(q, plot=False, return_all=True)
     # # robot.print_frame(T)
-    # q_calc = robot.inverse_kinematics(T)
+    # q_calc = robot.inverse_kinematics(T, plot=False)
     # T_calc = robot.forward_kinematics(q_calc, debug=False)
 
     # print(q, q_calc)

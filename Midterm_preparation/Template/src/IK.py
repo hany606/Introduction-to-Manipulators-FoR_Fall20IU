@@ -19,7 +19,9 @@ def IK(T, T_base=None, T_tool=None, m=-1, debug=True):
     T_tool = translation_x(0) if T_tool is None else T_tool
     # TODO: Change
     T_o = inv(translation_z(l[0])) @ inv(T_base) @ T @ inv(T_tool) @ inv(translation_x(l[5])) #@ inv(translation_x(l[3]+l[4]))
-    # print("####### DEBUG")
+    print("####### DEBUG")
+    print_matrix(T_o)
+    print("####### DEBUG")
 
     position = get_position(T_o)
     x, y, z = position[0], position[1], position[2]
