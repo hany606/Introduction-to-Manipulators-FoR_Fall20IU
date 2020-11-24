@@ -2,7 +2,7 @@
 # Also, to be able to be used inside the class
 # - Both FK and IK should be implemented as distinct files.
 import numpy as np
-from robot import KUKA_KR10_R1100_2_configs as configs
+from robot import RRR_robot_configs as configs
 from utils import *
 
 # q -- generalized coordinates (thetas)

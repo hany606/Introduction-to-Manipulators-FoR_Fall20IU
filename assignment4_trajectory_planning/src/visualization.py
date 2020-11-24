@@ -2,13 +2,14 @@ import numpy as np
 import vpython as vp
 
 class RobotVisualization_vpython:
-    def __init__(self, rate=100, scale=1,radius={"link":0.005, "joint":0.006, "node":0.008, "axe":0.003}, origin=[0.0, 0.0, 0.0], axe_length=0.2):
+    def __init__(self, rate=100, scale=1,radius={"link":0.005, "joint":0.006, "node":0.008, "axe":0.003, "trajectory_trail":0.004}, origin=[0.0, 0.0, 0.0], axe_length=0.2):
         self.rate = rate
         self.radius = radius
         self.axe_color = vp.vector(1, 1, 1)
         self.link_color = vp.vector(242/255, 92/255, 25/255)
         self.joint_color = vp.vector(1,1,1)
         self.node_color = vp.vector(0,1,0)
+        self.trail_color = vp.vector(1,0,0)
         self.text_color = vp.vector(0,1,0)
         self.origin = origin
         self.axe_length = axe_length
@@ -25,6 +26,7 @@ class RobotVisualization_vpython:
         else:
             frame = frame_sub
         c = []
+        visible_idx = []
         for obj in frame:
             shape_type = obj[0]
             if(shape_type == "joint"):
@@ -38,6 +40,11 @@ class RobotVisualization_vpython:
                 color = self.node_color if len(obj) <= 2 else vp.vector(*obj[2])
                 c.append(vp.sphere(pos=v, radius=self.radius["node"], color=color))
                 # c.append(vp.box(pos=v, length=self.radius["node"]*2, height=self.radius["node"]*2, width=self.radius["node"]*2, color=color))
+            elif(shape_type == "trajectory_trail"):
+                visible_idx.append(len(c))
+                v = vp.vector(*obj[1])*self.scale
+                color = self.trail_color if len(obj) <= 2 else vp.vector(*obj[2])
+                c.append(vp.sphere(pos=v, radius=self.radius["trajectory_trail"], color=color))
             elif(shape_type == "text_joint"):
                 text = str(obj[1])
                 v = vp.vector(*obj[2])*self.scale
@@ -62,6 +69,8 @@ class RobotVisualization_vpython:
                 c.append(vp.curve(pos=[v1, v2], color=_color, radius=r))
         vp.rate(self.rate)
         for i in range(len(frame)):
+            if(i in visible_idx):
+                continue
             c[i].visible = False
 
 if __name__ == "__main__":

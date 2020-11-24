@@ -1,7 +1,7 @@
 # This file to calculate the jacobian with two methods: Skew theory & Numberical derivatives
 # It is made according to the requirement of the assignment to make it in seperate file
 import numpy as np
-from robot import KUKA_KR10_R1100_2_configs as configs
+from robot import RRR_robot_configs as configs
 from utils import *
 import sympy as sp
 
@@ -23,19 +23,18 @@ class Jacobian:
     def calc_numerical(self, q):
         J = np.zeros((6,3))
         # FK Zero configuration
-        T = self.T_base_robot @ rotation_z(q[0]) @ translation_z(self.l[0]) @ rotation_y(q[1]) @ translation_x(self.l[2]) @ rotation_y(q[2]) @ translation_x(self.l[3]) @ self.T_tool_robot
+        T = self.T_base_robot @ rotation_z(q[0]) @ translation_z(self.l[0]) @ rotation_y(q[1]) @ translation_x(self.l[1]) @ rotation_y(q[2]) @ translation_x(self.l[2]) @ self.T_tool_robot
     
-
         To_inv = np.eye(4)
         To_inv[:3,:3] = np.linalg.inv(T[:3,:3])
 
-        dT = self.T_base_robot @ drotation_z(q[0]) @ translation_z(self.l[0]) @ rotation_y(q[1]) @ translation_x(self.l[2]) @ rotation_y(q[2]) @ translation_x(self.l[3]) @ self.T_tool_robot @ To_inv
+        dT = self.T_base_robot @ drotation_z(q[0]) @ translation_z(self.l[0]) @ rotation_y(q[1]) @ translation_x(self.l[1]) @ rotation_y(q[2]) @ translation_x(self.l[2]) @ self.T_tool_robot @ To_inv
         J[:,0] = self._get_jacobian_column(dT)
 
-        dT = self.T_base_robot @ rotation_z(q[0]) @ translation_z(self.l[0]) @ drotation_y(q[1]) @ translation_x(self.l[2]) @ rotation_y(q[2]) @ translation_x(self.l[3]) @ self.T_tool_robot @ To_inv
+        dT = self.T_base_robot @ rotation_z(q[0]) @ translation_z(self.l[0]) @ drotation_y(q[1]) @ translation_x(self.l[1]) @ rotation_y(q[2]) @ translation_x(self.l[2]) @ self.T_tool_robot @ To_inv
         J[:,1] = self._get_jacobian_column(dT)
 
-        dT = self.T_base_robot @ rotation_z(q[0]) @ translation_z(self.l[0]) @ rotation_y(q[1]) @ translation_x(self.l[2]) @ drotation_y(q[2]) @ translation_x(self.l[3]) @ self.T_tool_robot @ To_inv
+        dT = self.T_base_robot @ rotation_z(q[0]) @ translation_z(self.l[0]) @ rotation_y(q[1]) @ translation_x(self.l[1]) @ drotation_y(q[2]) @ translation_x(self.l[2]) @ self.T_tool_robot @ To_inv
         J[:,2] = self._get_jacobian_column(dT)
 
         return J
@@ -43,8 +42,8 @@ class Jacobian:
     def calc_skew(self, q):
         A =  [  self.T_base_robot,
                 rotation_z(q[0]) @ translation_z(self.l[0]),
-                rotation_y(q[1]) @ translation_x(self.l[2]),
-                rotation_y(q[2]) @ translation_x(self.l[3]) @ self.T_tool_robot]
+                rotation_y(q[1]) @ translation_x(self.l[1]),
+                rotation_y(q[2]) @ translation_x(self.l[2]) @ self.T_tool_robot]
     
         # calculate O, U vectors
         O = []
@@ -68,7 +67,7 @@ class Jacobian:
 if __name__ == "__main__":
     jacobian = Jacobian()
 
-    q = np.zeros((6,1))
+    q = np.zeros((3,1))
 
     q[1] = np.pi/4
     skew = jacobian.calc_skew(q)

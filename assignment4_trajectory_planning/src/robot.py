@@ -1,12 +1,15 @@
 from utils import *
 import visualization as visual
+from TrajectoryPlanning import TrajectoryPlanning
 
-class KUKA_KR10_R1100_2:
+class RRR_robot:
     def __init__(self, T_base=None, T_tool=None):
-        self.links_dimensions = KUKA_KR10_R1100_2_configs.get_links_dimensions()
-        self.joint_limits = KUKA_KR10_R1100_2_configs.get_joints_limits()
+        self.links_dimensions = RRR_robot_configs.get_links_dimensions()
+        self.joint_limits = RRR_robot_configs.get_joints_limits()
         self.T_base = translation_x(0) if T_base is None else T_base
         self.T_tool = translation_x(0) if T_tool is None else T_tool
+        self.visualization_radius = {"link":0.003, "joint":0.004, "node":0.004, "axe":0.003, "trajectory_trail": 0.0005}
+        self.visualization_scale = 0.05
     
     def print_frames(self, frames):
         print(f"Note: Frame #{len(frames)-1} -> Tool")
@@ -25,7 +28,7 @@ class KUKA_KR10_R1100_2:
             print(f"Joint #{i}: {angle} rad ---> {angle*180/np.pi} degrees")
 
     def plot_robot(self, T):
-        vis = visual.RobotVisualization_vpython(rate=10, scale=0.05, radius={"link":0.007, "joint":0.008, "node":0.01, "axe":0.003})
+        vis = visual.RobotVisualization_vpython(rate=10, scale=self.visualization_scale, radius=self.visualization_radius)
         frame = []
         links = []
         joints = []
@@ -56,11 +59,11 @@ class KUKA_KR10_R1100_2:
         while True:
             vis.render_frame(frame, axis=False)
 
-    def plot_robot_multi_frames(self, Ts, rate_factor=1):
+    def plot_robot_multi_frames(self, Ts, trail=None, rate_factor=1):
+        vis = visual.RobotVisualization_vpython(rate=1*rate_factor, scale=self.visualization_scale, radius=self.visualization_radius)
         while True:
             for idx, T in enumerate(Ts):
                 # print(T)
-                vis = visual.RobotVisualization_vpython(rate=1*rate_factor, scale=0.05, radius={"link":0.007, "joint":0.008, "node":0.01, "axe":0.003})
                 frame = []
                 links = []
                 joints = []
@@ -87,6 +90,8 @@ class KUKA_KR10_R1100_2:
                     frame.append(["joint", j])
                 frame.append(["node", node])
                 frame.append(["time", idx, 0])
+                if(trail is not None):
+                    frame.append(["trajectory_trail", trail[idx]])
                 # print(frame)
                 vis.render_frame(frame, axis=False)
 
@@ -139,7 +144,7 @@ class KUKA_KR10_R1100_2:
         u, s, v = np.linalg.svd(J)
         eps = 1e-15
 
-        if(singularity_method == "determinant"):
+        if(J.shape[1] == J.shape[0] and singularity_method == "determinant"):
             if(abs(np.linalg.det(J)) <= eps):
                 singularity_flag = True
         
@@ -148,7 +153,7 @@ class KUKA_KR10_R1100_2:
                 singularity_flag = True
         
         if(singularity_method == "rank"):
-            if(np.linalg.matrix_rank(J) < 6):
+            if(np.linalg.matrix_rank(J) < 3):
                 singularity_flag = True
 
         if(debug == True):
@@ -156,11 +161,22 @@ class KUKA_KR10_R1100_2:
             print(f"Configuration (q): {q}")
             # print(f"Jacobian (J): {J}")
             print(f"SVD: s: {s}, minimum value: {min(s)}")
-            print(f"Determinant (det(J)): {np.linalg.det(J)}")
+            if(J.shape[1] == J.shape[0]):
+                print(f"Determinant (det(J)): {np.linalg.det(J)}")
+            else:
+                print("Dimension are not equal to each other, it is impossible to calculate the determinant")
             print(f"Rank (rank(J)): {np.linalg.matrix_rank(J)}")
             print(f"Result: This configuration is {'a Singular' if singularity_flag == True else 'Not a Singular'}")
         return singularity_flag
-class KUKA_KR10_R1100_2_configs:
+
+    def polynomial5(self, t0, q0, dq0, ddq0, tf, qf, dqf, ddqf, dt=1/100):
+        return TrajectoryPlanning.polynomial5(t0, q0, dq0, ddq0, tf, qf, dqf, ddqf)
+    
+    def PTP(self, q0, qf, f=10, dq_max=1, ddq_max=10):
+        traj_ptp, time = TrajectoryPlanning.PTP(q0.copy(), qf.copy(), f, dq_max, ddq_max)
+        return traj_ptp
+        
+class RRR_robot_configs:
     @staticmethod
     def get_links_dimensions():
         return [1,1,1]
@@ -174,15 +190,15 @@ class KUKA_KR10_R1100_2_configs:
         return rad
 
 if __name__ == "__main__":
-    robot = KUKA_KR10_R1100_2()
-    q = np.zeros((6,1))
+    robot = RRR_robot()
+    q = np.zeros((3,1))
     skew = robot.jacobian(q, method="skew")
     numerical = robot.jacobian(q, method="numerical")
     print(skew)
     print(numerical)
-    print(calc_error(numerical, skew))
+    print(f"Erro between Numerical and Skew for jacobian -> {calc_error(numerical, skew)}")
 
-    q = np.zeros((6,))
+    q = np.zeros((3,))
     # q[1] = -np.pi/4
     # q = [0, np.pi/4, 0,    1, 1, 0]
     T = robot.forward_kinematics(q, plot=False, return_all=False)
