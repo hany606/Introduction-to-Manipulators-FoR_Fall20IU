@@ -2,6 +2,7 @@ from utils import *
 import visualization as visual
 from TrajectoryPlanning import TrajectoryPlanning
 
+
 class RRR_robot:
     def __init__(self, T_base=translation_x(0), T_tool=translation_x(0)):
         self.links_dimensions = RRR_robot_configs.get_links_dimensions()
@@ -137,6 +138,9 @@ class RRR_robot:
         elif(method == "numerical"):
             return jacobian.calc_numerical(q)
     
+    def hello(self):
+        print("elfds")
+        return 0
     def check_singularity(self, q, jacobian_method="numerical", singularity_method="rank", debug=True):
         J = self.jacobian(q, method=jacobian_method)
         singularity_flag = False
@@ -175,8 +179,8 @@ class RRR_robot:
         traj_ptp, time = TrajectoryPlanning.PTP(q0.copy(), qf.copy(), f, dq_max, ddq_max)
         return traj_ptp
         
-    def LIN(self, p0, pf, f=10, dp_max=1, ddp_max=10, num_samples=100):
-        TrajectoryPlanning.LIN(p0.copy(), pf.copy(), f, dp_max, ddp_max, num_samples=num_samples, robot=self)
+    def LIN(self, p0, pf, f=10, dp_max=1, ddp_max=10, num_samples=100, debug=False):
+        return TrajectoryPlanning.LIN(self, p0.copy(), pf.copy(), f, dp_max, ddp_max, num_samples=num_samples, debug=debug)
 class RRR_robot_configs:
     @staticmethod
     def get_links_dimensions():
@@ -212,3 +216,10 @@ if __name__ == "__main__":
     # # robot.print_frame(T_calc)
 
     # # print(f"Error using FK then IK then FK -> {calc_error(T, T_calc)}")
+
+    (p1, p2) = ([1,0,2], [1/np.sqrt(2),1/np.sqrt(2),1.2])
+    f = 10
+    dp_max = 1
+    ddp_max = 10
+    print(f"Setpoints: Starting {p1}, Final {p2}")
+    traj_lin = robot.LIN(p1.copy(), p2.copy(), f, dp_max, ddp_max)

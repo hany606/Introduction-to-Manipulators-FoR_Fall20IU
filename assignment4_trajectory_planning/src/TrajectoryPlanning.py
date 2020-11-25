@@ -6,7 +6,7 @@ from utils import get_position
 class TrajectoryPlanning:
 
     # Take the trajectory as a parameter
-    # Plot 3 
+    # Plot 3 figures (Position, Velocity & Acceleration)
     @staticmethod
     def plot_trajectory(traj, dt=1/100, title="Trajectory", time=None):
         traj = traj.squeeze()
@@ -226,7 +226,7 @@ class TrajectoryPlanning:
     # Returns a trajectory for each timestep, the entry has a 3 tuples for each joint
     #   each tuple has 3 elements (q_j^i, dq_j^i, ddq_j^i) st. 0<=j<=2 (joint index), i is the index of the iteration  
     @staticmethod
-    def LIN(robot, p0, pf, f=10, dq_max=1, ddq_max=10, num_samples=100, debug=False):
+    def LIN(robot, p0, pf, f=10, dp_max=1, ddp_max=10, num_samples=100, debug=False):
         def pos2hom(pos):
             hom = np.zeros((4,4))
             hom[:3,3] = pos.T
@@ -249,17 +249,30 @@ class TrajectoryPlanning:
         for point in sample:
             # Calculate the joints positions using IK
             point = np.array(point.copy()).reshape((3,1))
+            # ----------------- PTP Planning --------------------------------
             qi_ref, status = robot.inverse_kinematics(pos2hom(point), plot=False, debug=False, debug_status=True)
-            # Check the singularity problems? & Many solution?
+            # TODO: Check the singularity problems? & Many solution?
             # Plan point to point using the sub points
-            traj_ptp, _ = TrajectoryPlanning.PTP(q0.copy(), qi_ref.copy(), f=f, dq_max=dp_max, ddq_max=ddq_max, debug=debug)
+            # TODO: Change dq_max to be a vector, dp_max to be a vector
+            # TODO: Change dq_max = pinv(J[:3,]) @ dp_max 
+            dq_max = dp_max
+            ddq_max = ddp_max
+            traj_ptp, time = TrajectoryPlanning.PTP(q0.copy(), qi_ref.copy(), f=f, dq_max=dq_max, ddq_max=ddq_max, debug=debug)
+            # TODO: Concatenate trajectory and time in big lists to make it one graph
+            # Get the final reached configuration (joints' positions and velocities) (It should be the reference point) from the generated trajectory
             qi = traj_ptp[-1,:,0]
             dqi = traj_ptp[:,:,1]
+            # --------------------------------------------------------------
+            # Get the final reached point (It should be the reference point) from the generated trajectory
             pi_hom = robot.forward_kinematics(qi, plot=False, debug=False)
             pi = get_position(pi_hom)
             if(debug):
                 print(f"Goal (Final) {qi_ref}\nReal (Final): {qi}")
                 print(pi)
+            # Each pi in the sample consist of joint trajectory planning which has number of points in the trajectory
+            # TODO: Not sure if just the plot of the transition points are enough or even the points inside the PTP trajectory but don't think so
+            # TODO: Get dpi for all the points in the trajectory of ptp and then add them to endeffector trajectory
+            # TODO: Concatenate them in Endeffector plot for velocity and position
             # Calculate the endeffector velocities using Jacobian
             J = robot.jacobian(qi, method="skew")
             dpi = J @ dqi.T
