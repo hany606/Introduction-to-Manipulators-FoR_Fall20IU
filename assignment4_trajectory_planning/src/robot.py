@@ -9,8 +9,9 @@ class RRR_robot:
         self.joint_limits = RRR_robot_configs.get_joints_limits()
         self.T_base = T_base
         self.T_tool = T_tool
-        self.visualization_radius = {"link":0.003, "joint":0.004, "node":0.004, "axe":0.003, "trajectory_trail": 0.0005}
+        self.visualization_radius = {"link":0.003, "joint":0.004, "node":0.004, "axe":0.003, "trajectory_trail": 0.0009}
         self.visualization_scale = 0.05
+        self.trajectory_planning = TrajectoryPlanning
     
     def print_frames(self, frames):
         print(f"Note: Frame #{len(frames)-1} -> Tool")
@@ -172,15 +173,6 @@ class RRR_robot:
             print(f"Result: This configuration is {'a Singular' if singularity_flag == True else 'Not a Singular'}")
         return singularity_flag
 
-    def polynomial5(self, t0, q0, dq0, ddq0, tf, qf, dqf, ddqf, dt=1/100):
-        return TrajectoryPlanning.polynomial5(t0, q0, dq0, ddq0, tf, qf, dqf, ddqf)
-    
-    def PTP(self, q0, qf, f=10, dq_max=1, ddq_max=10):
-        traj_ptp, time = TrajectoryPlanning.PTP(q0.copy(), qf.copy(), f, dq_max, ddq_max)
-        return traj_ptp
-        
-    def LIN(self, p0, pf, f=10, dp_max=1, ddp_max=10, num_samples=100, debug=False):
-        return TrajectoryPlanning.LIN(self, p0.copy(), pf.copy(), f, dp_max, ddp_max, num_samples=num_samples, debug=debug)
 class RRR_robot_configs:
     @staticmethod
     def get_links_dimensions():
@@ -219,7 +211,7 @@ if __name__ == "__main__":
 
     (p1, p2) = ([1,0,2], [1/np.sqrt(2),1/np.sqrt(2),1.2])
     f = 10
-    dp_max = 1
-    ddp_max = 10
+    dp_max = [1, 1, 1]
+    ddp_max = [10, 10, 10]
     print(f"Setpoints: Starting {p1}, Final {p2}")
-    traj_lin = robot.LIN(p1.copy(), p2.copy(), f, dp_max, ddp_max)
+    traj_lin = robot.trajectory_planning.LIN(p1.copy(), p2.copy(), f, dp_max, ddp_max)

@@ -98,3 +98,9 @@ def print_matrix(f):
         print(f"Homogeneous Matrix:\n{f}")
         print("Rotation:\n", get_rotation(f))
         print("Position:\n", get_position(f)) 
+
+def pos2hom(pos):
+    hom = np.zeros((4,4))
+    hom[:3,3] = pos.T
+    hom[3,3] = 1
+    return hom

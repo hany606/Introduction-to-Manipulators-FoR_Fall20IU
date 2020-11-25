@@ -63,6 +63,67 @@ class Jacobian:
             J[3:,i] = U[i]
         return J
 
+    def calc_sympolic(self, q):
+        # Just to know which method works fine from the first three elements of each jacobian -> it appeared that the numerical derivatives has a problem (fixed)
+        q = q.squeeze()
+        # use sympy to calculate symbolically
+        def sp_translation_x(l):
+            return np.array([[1,0,0, l],
+                            [0,1,0, 0],
+                            [0,0,1, 0],
+                            [0,0,0, 1]])
+
+        def sp_translation_y(l):
+            return np.array([[1,0,0, 0],
+                            [0,1,0, l],
+                            [0,0,1, 0],
+                            [0,0,0, 1]])
+
+        def sp_translation_z(l):
+            return np.array([[1,0,0, 0],
+                            [0,1,0, 0],
+                            [0,0,1, l],
+                            [0,0,0, 1]])
+
+        def sp_rotation_x(theta):
+            return np.array([[1,         0,          0, 0],
+                            [0,sp.cos(theta),-sp.sin(theta), 0],
+                            [0,sp.sin(theta), sp.cos(theta), 0],
+                            [0,         0,          0, 1]])
+
+
+        def sp_rotation_y(theta):
+            return np.array([[sp.cos(theta) ,0,sp.sin(theta), 0],
+                            [0          ,1,         0, 0],
+                            [-sp.sin(theta),0,sp.cos(theta), 0],
+                            [0          ,0,         0, 1]])
+
+        def sp_rotation_z(theta):
+            return np.array([[sp.cos(theta),-sp.sin(theta),0, 0],
+                            [sp.sin(theta), sp.cos(theta),0, 0],
+                            [0         ,0          ,1, 0],
+                            [0         ,0          ,0, 1]])
+
+        q0, q1, q2, q3, q4, q5 = sp.symbols("q0 q1 q2 q3 q4 q5", real=True)
+        l0, l1, l2, l3, l4, l5 = sp.symbols("l0 l1 l2 l3 l4 l5", real=True)
+        mat = sp.Matrix
+
+        T = mat(self.T_base_robot) @ mat(sp_rotation_z(q0)) @ mat(sp_translation_z(l0)) @ mat(sp_translation_x(l1)) @ mat(sp_rotation_y(q1)) @ mat(sp_translation_x(l2)) @ mat(sp_rotation_y(q2)) @ mat(sp_translation_x(l3)) @ mat(sp_rotation_x(q3)) @ mat(sp_translation_x(l4)) @ mat(sp_rotation_y(q4)) @ mat(sp_rotation_x(q5)) @ mat(sp_translation_x(l5)) @ mat(self.T_tool_robot)
+
+        J = np.zeros((6,6))
+        for i in range(3):
+            J[i,0] = T[i,3].diff(q0).subs({q0:q[0], q1:q[1], q2:q[2],
+                                    l0:self.l[0], l1:self.l[1], l2:self.l[2]})
+            J[i,1] = T[i,3].diff(q1).subs({q0:q[0], q1:q[1], q2:q[2],
+                                    l0:self.l[0], l1:self.l[1], l2:self.l[2]})        
+            J[i,2] = T[i,3].diff(q2).subs({q0:q[0], q1:q[1], q2:q[2],
+                                    l0:self.l[0], l1:self.l[1], l2:self.l[2]})
+            # J[i,3] = ?
+            # J[i,4] = ?
+            # J[i,5] = ?
+        # print(J)
+        return J
+
         
 if __name__ == "__main__":
     jacobian = Jacobian()
