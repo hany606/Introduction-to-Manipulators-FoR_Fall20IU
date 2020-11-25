@@ -50,7 +50,8 @@ class RobotVisualization_vpython:
                 v = vp.vector(*obj[2])*self.scale
                 c.append(vp.text(text=text, pos=v,color=self.text_color, height=0.03))
             elif(shape_type == "time"):
-                text= "Steps: {:}, Seconds: {:.3f}".format(obj[1], obj[2])
+                # text= "Steps: {:}, Seconds: {:.3f}".format(obj[1], obj[2])
+                text= "Steps: {:}".format(obj[1], obj[2])
                 c.append(vp.label(text=text, pos=self.time_text_pos, align="right", color=self.time_color))
                 # c.append(vp.text(text=text, pos=self.time_text_pos, align="right", height=self.time_text_height, billboard=True, emissive=True, color=self.time_color))
             else:   # link, axe

@@ -3,11 +3,11 @@ import visualization as visual
 from TrajectoryPlanning import TrajectoryPlanning
 
 class RRR_robot:
-    def __init__(self, T_base=None, T_tool=None):
+    def __init__(self, T_base=translation_x(0), T_tool=translation_x(0)):
         self.links_dimensions = RRR_robot_configs.get_links_dimensions()
         self.joint_limits = RRR_robot_configs.get_joints_limits()
-        self.T_base = translation_x(0) if T_base is None else T_base
-        self.T_tool = translation_x(0) if T_tool is None else T_tool
+        self.T_base = T_base
+        self.T_tool = T_tool
         self.visualization_radius = {"link":0.003, "joint":0.004, "node":0.004, "axe":0.003, "trajectory_trail": 0.0005}
         self.visualization_scale = 0.05
     
@@ -111,7 +111,7 @@ class RRR_robot:
             return T
         return T[-1]    # end_effector
 
-    def inverse_kinematics(self, T, m=-1, plot=True, debug=True):
+    def inverse_kinematics(self, T, m=-1, plot=True, debug=True, debug_status=False):
         from IK import IK
 
         q, status = IK(T, T_base=self.T_base, T_tool=self.T_tool, m=m, debug=True)
@@ -123,10 +123,9 @@ class RRR_robot:
             self.print_angles(q)
             print(status)
 
-        if(not debug == True):
-            # print(q)
-            return q
-
+        if(debug_status == True):
+            return q, status
+        
         return q
 
 
@@ -176,6 +175,8 @@ class RRR_robot:
         traj_ptp, time = TrajectoryPlanning.PTP(q0.copy(), qf.copy(), f, dq_max, ddq_max)
         return traj_ptp
         
+    def LIN(self, p0, pf, f=10, dp_max=1, ddp_max=10, num_samples=100):
+        TrajectoryPlanning.LIN(p0.copy(), pf.copy(), f, dp_max, ddp_max, num_samples=num_samples, robot=self)
 class RRR_robot_configs:
     @staticmethod
     def get_links_dimensions():

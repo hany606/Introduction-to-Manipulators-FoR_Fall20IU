@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from math import sqrt, ceil
+from utils import get_position
 
 class TrajectoryPlanning:
 
@@ -71,8 +72,7 @@ class TrajectoryPlanning:
     # Returns a trajectory for each timestep, the entry has a 3 tuples for each joint
     #   each tuple has 3 elements (q_j^i, dq_j^i, ddq_j^i) st. 0<=j<=2 (joint index), i is the index of the iteration  
     @staticmethod
-    def PTP(q0, qf, f=10, dq_max=1, ddq_max=10):
-        print(q0)
+    def PTP(q0, qf, f=10, dq_max=1, ddq_max=10, debug=False):
         dt = 1/f
         joints_status = np.empty((3,5))
         synchronization_flag = False    # Has two meaning (one of the profiles for the joints is trapezoidal) and (the case is trapezoidal after synchronization)
@@ -107,7 +107,8 @@ class TrajectoryPlanning:
         else:
             # All of them are triangular and it will be triangular for all
             case = 2#"Triangular"
-        print(f"After Selecting profiles: \n{joints_status}")
+        if(debug):
+            print(f"After Selecting profiles: \n{joints_status}")
         t1_dash = np.max(joints_status[:,1])
         tau_dash = np.max(joints_status[:,2] - joints_status[:,1]) + t1_dash
         # Replan after synchronization
@@ -123,7 +124,8 @@ class TrajectoryPlanning:
                 dq_max_2dash = delta_q / tau_dash
                 ddq_max_2dash = delta_q / (tau_dash*t1_dash)  
             joints_status_dash[j,:] = np.array([case, t1_dash, tau_dash, dq_max_2dash, ddq_max_2dash])
-        print(f"After Synchroniztion: \n{joints_status_dash}")
+        if(debug):
+            print(f"After Synchroniztion: \n{joints_status_dash}")
         # joints_status = np.array(joints_status_dash)
         # Discretecize
         # Get n, m
@@ -146,7 +148,8 @@ class TrajectoryPlanning:
                 dq_max_3dash = delta_q / tau_2dash
                 ddq_max_3dash = delta_q / (tau_2dash*t1_2dash)  
             joints_status_2dash[j,:] = np.array([case, t1_2dash, tau_2dash, dq_max_3dash, ddq_max_3dash])
-        print(f"After Discretecization: \n{joints_status_2dash}")
+        if(debug):
+            print(f"After Discretecization: \n{joints_status_2dash}")
 
         # Apply the trajectory equations
         total_time = None
@@ -156,14 +159,19 @@ class TrajectoryPlanning:
         # if triangular
         else:
             total_time = t1_2dash*2
-        print(f"t1 = {t1_2dash}, tau = {tau_2dash}")
-        print(f"Total time -> {total_time}s")
+        if(debug):
+            print(f"t1 = {t1_2dash}, tau = {tau_2dash}")
+            print(f"Total time -> {total_time}s")
         num_timesteps = 1000    # Number of steps for the simulation time
         time = np.linspace(0, total_time+dt*2, num_timesteps)    # simulation time not control time
         traj = np.empty((num_timesteps,3,3))
         pos_prev = q0
         direction = [np.sign(qf[j] - q0[j]) for j in range(3)]
-        count = 0
+        if(debug):
+            if(joints_status_2dash[0][0] == 1):
+                print("Trapezoidal Profile")
+            else:
+                print("Triangular Profile")
         for i,t in enumerate(time):
             for j in range(3):
                 acc, vel, pos = 0, 0, 0
@@ -175,7 +183,6 @@ class TrajectoryPlanning:
                         # print(f"1 -> {t}")
                         acc = +joints_status_2dash[j][4]*direction[j]
                         vel = acc*t
-                        count += 1
                         pos = pos_prev[j] + vel*(time[1] - time[0])
                     # Zero Acceleration
                     elif(t1_2dash <= t and t < tau_2dash):
@@ -184,7 +191,6 @@ class TrajectoryPlanning:
                         pos = pos_prev[j] + vel*(time[1] - time[0])
                     # Deceleration
                     elif(tau_2dash <= t and t <= total_time):
-                        count -= 1
                         acc = -joints_status_2dash[j][4]*direction[j]
                         vel = direction[j]*joints_status_2dash[j][3] + acc*(t-tau_2dash)
                         pos = pos_prev[j] + vel*(time[1] - time[0])
@@ -197,10 +203,21 @@ class TrajectoryPlanning:
                 else:
                     # Accelerate
                     if(0 <= t and t < t1_2dash):
-                        pass
+                        acc = +joints_status_2dash[j][4]*direction[j]
+                        vel = acc*t
+                        pos = pos_prev[j] + vel*(time[1] - time[0])
+
                     # Deceleration
+                    elif(t1_2dash <= t and t <= total_time):
+                        acc = -joints_status_2dash[j][4]*direction[j]
+                        vel = direction[j]*joints_status_2dash[j][3] + acc*(t-tau_2dash)
+                        pos = pos_prev[j] + vel*(time[1] - time[0])
+                    
                     else:
-                        pass
+                        acc = 0
+                        vel = 0
+                        pos = pos_prev[j]
+
                 traj[i][j] = np.array([pos, vel, acc])
                 pos_prev[j] = pos
         return traj, time
@@ -209,12 +226,48 @@ class TrajectoryPlanning:
     # Returns a trajectory for each timestep, the entry has a 3 tuples for each joint
     #   each tuple has 3 elements (q_j^i, dq_j^i, ddq_j^i) st. 0<=j<=2 (joint index), i is the index of the iteration  
     @staticmethod
-    def LIN(q0, qf, f=10, dq_max=1, ddq_max=10):
+    def LIN(robot, p0, pf, f=10, dq_max=1, ddq_max=10, num_samples=100, debug=False):
+        def pos2hom(pos):
+            hom = np.zeros((4,4))
+            hom[:3,3] = pos.T
+            hom[3,3] = 1
+            return hom
+
+        p0, pf = np.array(p0), np.array(pf)
+        q0, status = robot.inverse_kinematics(pos2hom(p0), plot=False, debug=False, debug_status=True)
         # Create equation of line using the two points
-        # Split the path to sub points, calculate the joints using IK
-        # Plan point to point using the sub points
-        # Check the singularity problems?
-        pass
+        line_dir = pf - p0
+        line_eq = lambda a: p0 + a*line_dir
+        # (Sampling) Split the path to sub points
+        sample = []
+        for i in range(num_samples):
+            sample.append(line_eq((i+1)/num_samples))
+            # print(line_eq((i+1)/num_samples))
+        # For each point in the sample
+        joint_traj = []
+        endeffector_traj = []
+        for point in sample:
+            # Calculate the joints positions using IK
+            point = np.array(point.copy()).reshape((3,1))
+            qi_ref, status = robot.inverse_kinematics(pos2hom(point), plot=False, debug=False, debug_status=True)
+            # Check the singularity problems? & Many solution?
+            # Plan point to point using the sub points
+            traj_ptp, _ = TrajectoryPlanning.PTP(q0.copy(), qi_ref.copy(), f=f, dq_max=dp_max, ddq_max=ddq_max, debug=debug)
+            qi = traj_ptp[-1,:,0]
+            dqi = traj_ptp[:,:,1]
+            pi_hom = robot.forward_kinematics(qi, plot=False, debug=False)
+            pi = get_position(pi_hom)
+            if(debug):
+                print(f"Goal (Final) {qi_ref}\nReal (Final): {qi}")
+                print(pi)
+            # Calculate the endeffector velocities using Jacobian
+            J = robot.jacobian(qi, method="skew")
+            dpi = J @ dqi.T
+            # print(dpi)
+            q0 = qi
+            p0 = pi
+        print(f"Goal (Final) {pf}\nReal (Final): {p0}")
+        return None
 
 if __name__ == "__main__":
     # ----------- Task 1 -----------------------------
@@ -226,13 +279,22 @@ if __name__ == "__main__":
     # traj_poly5 = TrajectoryPlanning.polynomial5(t0, q0, dq0, ddq0, tf, qf, dqf, ddqf)
     # TrajectoryPlanning.plot_trajectory(traj=traj_poly5, title="Polynomial - 5th Order")
 
-    (q1, q2) = ([0,0,0], [-0.9,-2.3,1.2])
-    f = 10
-    dq_max = 1
-    ddq_max = 10
-    traj_ptp, time = TrajectoryPlanning.PTP(q1.copy(), q2.copy(), f, dq_max, ddq_max)
-    print(f"Setpoints: Starting {q1}, Final {q2}")
-    print(f"Goal (Final) {q2}\nReal (Final): {traj_ptp[-1,:,0]}")
-    TrajectoryPlanning.plot_trajectory(traj=traj_ptp, title="PTP - Trapezoidal", time=time)
+    # (q1, q2) = ([0,0,0], [-0.9,-2.3,1.2])
+    # f = 10
+    # dq_max = 1
+    # ddq_max = 10
+    # traj_ptp, time = TrajectoryPlanning.PTP(q1.copy(), q2.copy(), f, dq_max, ddq_max)
+    # print(f"Setpoints: Starting {q1}, Final {q2}")
+    # print(f"Goal (Final) {q2}\nReal (Final): {traj_ptp[-1,:,0]}")
+    # TrajectoryPlanning.plot_trajectory(traj=traj_ptp, title="PTP - Trapezoidal", time=time)
 
-    
+    from robot import RRR_robot
+    robot = RRR_robot()
+
+    (p1, p2) = ([1,0,2], [1/sqrt(2),1/sqrt(2),1.2])
+    f = 10
+    dp_max = 1
+    ddp_max = 10
+    print(f"Setpoints: Starting {p1}, Final {p2}")
+    traj_lin = TrajectoryPlanning.LIN(robot, p1.copy(), p2.copy(), f, dp_max, ddp_max)
+    # TrajectoryPlanning.plot_trajectory(traj=traj_ptp, title="PTP - Trapezoidal", time=time)

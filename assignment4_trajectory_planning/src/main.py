@@ -14,9 +14,9 @@ def calc_jacobian(q, debug=True):
         print("------------------------------------------------------")
     return err
 
-q = [0, 0, 0]
+q = [0.0, -1.5707963267948966, 1.5707963267948966]
 # q = [0, 0, 0, 0, 0, 0]
-T = robot.forward_kinematics(q, plot=False, debug=False)
+T = robot.forward_kinematics(q, plot=True, debug=False)
 q_calc = robot.inverse_kinematics(T, plot=False, debug=False)
 T_calc = robot.forward_kinematics(q_calc, plot=False, debug=False)
 # T_calc = robot.forward_kinematics(q_calc, plot=True, debug=False)

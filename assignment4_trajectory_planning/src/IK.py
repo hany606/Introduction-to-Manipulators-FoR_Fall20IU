@@ -46,7 +46,7 @@ def IK(T, T_base=None, T_tool=None, m=-1, debug=True):
         status += "\nMany Solutions [rotation of q_1] (q1 = any) -- on z-axis"
     else:
         q[0] = np.arctan2(y,x)
-        status += "\nOne Solution"
+        status += "\nTwo Solutions (Elbow up and Elbow down)"
 
     return q, status
 
