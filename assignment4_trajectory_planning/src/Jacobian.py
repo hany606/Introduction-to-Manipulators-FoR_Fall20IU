@@ -38,6 +38,30 @@ class Jacobian:
         J[:,2] = self._get_jacobian_column(dT)
 
         return J
+
+    def calc_skew(self, q):
+        A =  [  self.T_base_robot,
+                rotation_z(q[0]) @ translation_z(self.l[0]),
+                rotation_y(q[1]) @ translation_x(self.l[1]),
+                rotation_y(q[2]) @ translation_x(self.l[2]) @ self.T_tool_robot]
+    
+        # calculate O, U vectors
+        O = []
+        U = []
+        # z y y x y x
+        u_rotation_joints_cols = [2, 1, 1]
+        T0i = np.eye(4)
+        for i in range(3):
+            T0i = T0i @ A[i]
+            O.append(T0i[:3,3])
+            U.append(T0i[:3, u_rotation_joints_cols[i]])
+        T0i = T0i @ A[3]
+        O.append(T0i[:3,3])
+        J = np.zeros((6,3))
+        for i in range(3):
+            J[:3,i] = np.cross((U[i]).reshape((1,3)), (O[3] - O[i]).reshape((1,3))).T.squeeze()
+            J[3:,i] = U[i]
+        return J
         
 if __name__ == "__main__":
     jacobian = Jacobian()
