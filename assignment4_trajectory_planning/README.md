@@ -116,7 +116,9 @@ The following initial and goal configuration in cartesian space has been used to
    dq_max = [1, 1, 1]
    ddq_max = [10, 10, 10]
 ```
-![LIN-config-assignment plot](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment4_trajectory_planning/imgs/Trajectory_planning_LIN_Trapezoidal(united_config).png)
+![LIN-config-assignment plot cartesian](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment4_trajectory_planning/imgs/Trajectory_planning_LIN_Trapezoidal_v2_cartesian_space(united_config).png)
+
+![LIN-config-assignment plot joint](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment4_trajectory_planning/imgs/Trajectory_planning_LIN_Trapezoidal_v2_joint_space(united_config).png)
 
 
 
