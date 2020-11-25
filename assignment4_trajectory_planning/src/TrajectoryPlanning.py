@@ -180,9 +180,11 @@ class TrajectoryPlanning:
             delta_q = abs(q0[j] - qf[j])
             dq_max_2dash = None
             ddq_max_2dash = None
+            # Triangular
             if(synchronization_flag == False):
                 dq_max_2dash = delta_q / t1_dash
-                ddq_max_2dash = delta_q / (tau_dash*t1_dash)       
+                ddq_max_2dash = delta_q / (t1_dash*t1_dash)       
+            # Trapezoidal
             else:
                 dq_max_2dash = delta_q / tau_dash
                 ddq_max_2dash = delta_q / (tau_dash*t1_dash)  
@@ -207,9 +209,10 @@ class TrajectoryPlanning:
             delta_q = abs(q0[j] - qf[j])
             dq_max_3dash = None
             ddq_max_3dash = None
+            # Triangular
             if(synchronization_flag == False):
                 dq_max_3dash = delta_q / t1_2dash
-                ddq_max_3dash = delta_q / (tau_2dash*t1_2dash)       
+                ddq_max_3dash = delta_q / (t1_2dash*t1_2dash)       
             else:
                 dq_max_3dash = delta_q / tau_2dash
                 ddq_max_3dash = delta_q / (tau_2dash*t1_2dash)  
@@ -279,7 +282,7 @@ class TrajectoryPlanning:
                     # Deceleration
                     elif(t1_2dash <= t and t <= total_time):
                         acc = -joints_status_2dash[j][4]*direction[j]
-                        vel = direction[j]*joints_status_2dash[j][3] + acc*(t-tau_2dash)
+                        vel = direction[j]*joints_status_2dash[j][3] + acc*(t-t1_2dash)
                         pos = pos_prev[j] + vel*(time[1] - time[0])
                     
                     else:
@@ -343,15 +346,12 @@ class TrajectoryPlanning:
             point = np.array(point.copy()).reshape((3,1))
             # ----------------- PTP Planning --------------------------------
             qi_ref, status = robot.inverse_kinematics(pos2hom(point), plot=False, debug=False, debug_status=True)
-            # TODO: Check the singularity problems? & Many solution?
             # Plan point to point using the sub points
-            # TODO: Change dq_max = pinv(J[:3,]) @ dp_max -> Check if it is correct 
             J = robot.jacobian(qi_ref, method="numerical")
             dq_max = (np.linalg.pinv(J) @ np.array([dp_max[0], dp_max[1], dp_max[2], dp_max[2], dp_max[2], dp_max[2]]).T)[:3]
             ddq_max = ddp_max
             traj_ptp, time = TrajectoryPlanning.PTP(q0.copy(), qi_ref.copy(), f=f, dq_max=dq_max, ddq_max=ddq_max, debug=debug)
             total_time += time[-1]
-            # TODO: Concatenate trajectory and time in big lists to make it one graph
             # Get the final reached configuration (joints' positions and velocities) (It should be the reference point) from the generated trajectory
             qis = traj_ptp[:,:,0]#[-1,:,0]
             qi = qis[-1]
@@ -369,9 +369,6 @@ class TrajectoryPlanning:
                 print(f"Goal (Final) {qi_ref}\nReal (Final): {qi}")
                 print(pi)
             # Each pi in the sample consist of joint trajectory planning which has number of points in the trajectory
-            # TODO: Not sure if just the plot of the transition points are enough or even the points inside the PTP trajectory but don't think so
-            # TODO: Get dpi for all the points in the trajectory of ptp and then add them to cartesian trajectory
-            # TODO: Concatenate them in cartesian plot for velocity and position
             # Calculate the cartesian velocities using Jacobian
             joints_traj_select_indx = np.random.choice(qis.shape[0], int(1/num_samples*qis.shape[0]), replace=False)
             joints_traj_select_indx.sort()
