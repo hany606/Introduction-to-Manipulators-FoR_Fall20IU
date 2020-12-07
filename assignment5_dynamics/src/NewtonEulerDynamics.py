@@ -41,7 +41,7 @@ class NewtonEuler:
             for i in range(1,len(self.l)+1):
                 w_i.append(R_im1_i[i].T @ (w_i[i-1]+ dq[i-1] * z_i[i]))
                 # print(w_i[i])
-                dw_i.append(  R_im1_i[i].T @ (dw_i[i-1] \
+                dw_i.append(R_im1_i[i].T @ (dw_i[i-1] \
                             + ddq[i-1] * z_i[i] + np.cross((dq[i-1]*w_i[i-1]).squeeze(), z_i[i].squeeze()).reshape(3,1)))
                 # print(dw_i[i])
                 a_i.append(   R_im1_i[i].T @ a_i[i-1] \

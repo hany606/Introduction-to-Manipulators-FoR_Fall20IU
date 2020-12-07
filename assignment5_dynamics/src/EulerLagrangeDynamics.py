@@ -3,7 +3,7 @@ from utils import *
 
 
 class EulerLagrange:
-    def __init__(self,):
+    def __init__(self):
         self.length = 0.4
         self.l = [2*self.length, 2*self.length]
         self.d = [0, self.length]
@@ -11,7 +11,7 @@ class EulerLagrange:
         self.inertia = [1, 2]
         self.mass = [3, 4]
         
-    def direct(self, q0, dq0, ut, dt=0.0004):
+    def direct(self, q0, dq0, ut, dt=0.0004, debug=False):
         a1 = self.inertia[0] + self.mass[0]*(self.d[0]**2) + self.inertia[1] + self.mass[1]*(self.d[1]**2) + self.mass[1]*(self.l[0]**2)
         a2 = self.mass[1]*self.l[0]*self.d[1]
         a3 = self.inertia[1] + self.mass[1]*(self.d[1]**2)
@@ -27,7 +27,8 @@ class EulerLagrange:
             dq = dqt[i-1].copy()
             ddq = ddqt[i-1].copy()
             u = ut[i-1].copy()
-            
+            if(debug):
+                print(q[1])
             M = np.array([[a1+2*a2*np.cos(q[1]), a3+a2*np.cos(q[1])], [a3+a2*np.cos(q[1]), a3]]).astype(np.float64)
             
             c = np.array([-a2*np.sin(q[1]*(dq[1]**2+2*dq[0]*dq[1])), a2*np.sin(q[1])*(dq[1]**2)]).reshape(2,1)
@@ -45,7 +46,14 @@ class EulerLagrange:
             ddq = np.linalg.inv(M) @ (u-G-(C@dq).astype(np.float64))   
             dq = dq + ddq*dt
             q = q + dq*dt
-            
+            if(debug):
+                print(q)
+                print(dq)
+                print(ddq)
+                print("UUUU")
+                print(u)
+            if(debug):
+                print("--------------")
             # ddqt.append([ddq[1], ddq[0]])
             # dqt.append([dq[1], dq[0]])
             # qt.append([q[1], q[0]])

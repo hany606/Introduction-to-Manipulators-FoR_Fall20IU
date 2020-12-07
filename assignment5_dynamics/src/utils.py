@@ -1,5 +1,6 @@
 import numpy as np
 from sympy import simplify
+from matplotlib import pyplot as plt
 
 def translation_x(l):
     return np.array([[1,0,0, l],
@@ -122,3 +123,53 @@ def pos2hom(pos):
     hom[:3,3] = pos.T
     hom[3,3] = 1
     return hom
+
+def plot_u(u, dt=1/100, title="Control Input", time=None):
+    
+    u = np.array(u).reshape(len(u), 2)
+    time = np.linspace(0, dt*len(u), len(u)) if time is None else time
+
+    fig, ax = plt.subplots(1)
+    ax.plot(time, u)
+    ax.set_xlabel("Time - seconds")
+    ax.set_ylabel("u - (torque -- N.m)")
+    ax.legend(["Joint1", "Joint2"], loc="upper left", bbox_to_anchor=(1, 1))
+    ax.set_title("Control - Torques on Joints")
+    
+    fig.suptitle(title, fontsize=12)
+    plt.tight_layout()
+    plt.show()
+
+def plot_trajectory(traj, dt=1/100, title="Trajectory", time=None):
+    q, dq, ddq = traj[:]
+    
+    q = np.array(q).squeeze()
+    dq = np.array(dq).squeeze()
+    ddq = np.array(ddq).squeeze()
+    
+    time = np.linspace(0, dt*len(q), len(q)) if time is None else time
+
+    fig, axs = plt.subplots(3,1)
+    axs[0].plot(time, q)
+    axs[0].set_xlabel("Time - seconds")
+    axs[0].set_ylabel("q - rad")
+    axs[0].legend(["Joint1", "Joint2"], loc="upper left", bbox_to_anchor=(1, 1))
+    axs[0].set_title("Position")
+
+    axs[1].plot(time, dq)
+    axs[1].set_xlabel("Time - seconds")
+    axs[1].set_ylabel("dq - rad/sec")
+    axs[1].legend(["Joint1", "Joint2"], loc="upper left", bbox_to_anchor=(1, 1))
+    axs[1].set_title("Velocity")
+    
+    axs[2].plot(time, ddq)
+    axs[2].set_xlabel("Time - seconds")
+    axs[2].set_ylabel("dq - rad/sec^2")
+    axs[2].legend(["Joint1", "Joint2"], loc="upper left", bbox_to_anchor=(1, 1))
+    axs[2].set_title("Acceleration")
+
+    
+    fig.suptitle(title, fontsize=12)
+    plt.tight_layout()
+    plt.show()
+    
