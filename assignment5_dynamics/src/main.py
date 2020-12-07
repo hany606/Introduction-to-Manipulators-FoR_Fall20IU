@@ -13,22 +13,22 @@ dt = 0.0004
 simulation_times_steps = 25000#5000#25000
 
 
-# q0 = np.array([-np.pi/2, np.pi/2]).reshape(2,1) # config1
-q0 = np.array([-np.pi/2, 0]).reshape(2,1) # no motion config2
+q0 = np.array([-np.pi/2, np.pi/2]).reshape(2,1) # config1
+# q0 = np.array([-np.pi/2, 0]).reshape(2,1) # no motion config2
 # q0 = np.array([np.pi/2, 0]).reshape(2,1)    # no motion config3
 # q0 = np.array([np.pi/2, np.pi/4]).reshape(2,1)  # config4
 # q0 = np.array([0, 0]).reshape(2,1) #config5
 # print(q0)
 dq0 = np.array([0,0]).reshape(2,1)
 # dq0 = np.array([0.5,0]).reshape(2,1)
-# ut = [np.array([0,0]).reshape(2,1) for i in range(simulation_times_steps)]
-ut = [np.array([sin(i/500),0]).reshape(2,1) for i in range(simulation_times_steps)]
-plot_u(ut, dt=dt)
+ut = [np.array([0,0]).reshape(2,1) for i in range(simulation_times_steps)]
+# ut = [np.array([5*sin(i/500),0]).reshape(2,1) for i in range(simulation_times_steps)]
+# plot_u(ut, dt=dt)
 
 print(f"Computing the direct dynamics for simulation time: {simulation_times_steps*dt} seconds")
 qt, dqt, ddqt = EL_dyn.direct(q0, dq0, ut, dt=dt, debug=False)
 
-plot_trajectory([qt, dqt, ddqt], dt=dt)
+# plot_trajectory([qt, dqt, ddqt], dt=dt)
 # vis = RobotVisualization_vpython(rate=1000, scale=0.07, radius={"link":0.003, "joint":0.004, "node":0.004, "axe":0.003, "trajectory_trail": 0.0009})
 # while True:
 #     for i in range(len(qt)):
