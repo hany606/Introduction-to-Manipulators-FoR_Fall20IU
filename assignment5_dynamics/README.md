@@ -57,3 +57,11 @@ Control inputs graphs in the following plots, they are the output of the inverse
 ![Configuration 4](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment5_dynamics/imgs/u_config4_ne.png)
 
 ![Configuration 4](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment5_dynamics/imgs/config4.gif)
+
+
+## TODO:
+
+* Make the function works in an online manner (adding step function in the class) instead of calculating everything in the function and leave the user to step the dynamics
+* Refactor the code (Make it more OOP, more readable, more comments, better naming, combine the two classes in one file, add it to robot.py)
+* Implement direct lagrange dynamics using jacobian instead
+* Generalize the code to work with different types of manipulators easy
