@@ -19,3 +19,7 @@ This repository for practice, exercises, assignments, ...etc for Fundamental of 
 4. [Create different Trajectory Planning profiles and commands for RRR robot](https://github.com/hany606/FoR_Fall20IU/tree/main/assignment4_trajectory_planning)
 
 ![Trajectory Planning](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment4_trajectory_planning/imgs/all.gif)
+
+5. [Create dynamics model for RR planar robot (Direct using Lagrange and Inverse using Newton)](https://github.com/hany606/FoR_Fall20IU/tree/main/assignment5_dynamics)
+
+![Configuration 4](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment5_dynamics/imgs/config4.gif)
