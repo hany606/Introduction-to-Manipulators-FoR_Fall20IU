@@ -1,15 +1,29 @@
 # This file to calculate the jacobian with two methods: Skew theory & Numberical derivatives
 # It is made according to the requirement of the assignment to make it in seperate file
 import numpy as np
-from robot import KUKA_KR10_R1100_2_configs as configs
-from utils import *
-import sympy as sp
+from robot import FANUC_R_2000i_configs as configs
+# from utils import *
+from utils import translation_x as tx
+from utils import translation_y as ty
+from utils import translation_z as tz
+
+from utils import rotation_x as rx
+from utils import rotation_y as ry
+from utils import rotation_z as rz
+
+from utils import dtranslation_x as dtx
+from utils import dtranslation_y as dty
+from utils import dtranslation_z as dtz
+
+from utils import drotation_x as drx
+from utils import drotation_y as dry
+from utils import drotation_z as drz
 
 class Jacobian:
-    def __init__(self, T_base=None, T_tool=None):
-        self.T_base_robot = translation_x(0) if T_base is None else T_base
-        self.T_tool_robot = translation_x(0) if T_tool is None else T_tool
-        self.l = configs.get_links_dimensions()
+    def __init__(self, robot_configs, T_base=None, T_tool=None):
+        self.T_base = tx(0) if T_base is None else T_base
+        self.T_tool = tx(0) if T_tool is None else T_tool
+        self.d = robot_configs.get_links_dimensions()
 
     def _get_jacobian_column(self, dT):
         J = np.zeros((6,1))
@@ -20,142 +34,78 @@ class Jacobian:
         J[5,0] = dT[1,0]
         return J.squeeze()
 
-    def calc_numerical(self, q):
-        J = np.zeros((6,6))
-        # FK Zero configuration
-        T = self.T_base_robot @ rotation_z(q[0]) @ translation_z(self.l[0]) @ translation_x(self.l[1]) @ rotation_y(q[1]) @ translation_x(self.l[2]) @ rotation_y(q[2]) @ translation_x(self.l[3]) @ rotation_x(q[3]) @ translation_x(self.l[4]) @ rotation_y(q[4]) @ rotation_x(q[5]) @ translation_x(self.l[5]) @ self.T_tool_robot
-
+    def calc_identification_jacobian(self, T_base, T_tool, q, pi, pi_0, num_unknown_parameters=18):
+        J = np.zeros((6,num_unknown_parameters))
+        # Reducible Kinmatic Model: pi_0 is the nomial pi for the unknown parameters
+        T = T_base @ rz(q[0]) @ tx(self.d[1]+pi[0]) @ ty(pi[1]) @ rx(pi[2]) @ ry(q[1]+pi[3]) @ tx(pi[4]) @ rx(pi[5]) @ rz(pi[6]) @ ry(q[2]+pi[7]) @ tx(self.d[5]+pi[8]) @ tz(self.d[4]+pi[9]) @ rz(pi[10]) @ rx(q[3]+pi[11]) @ ty(pi[12]) @ tz(pi[13]) @ rz(pi[14]) @ ry(q[4] + pi[15]) @ tz(pi[16]) @ rz(pi[17]) @ rx(q[5]) @ T_tool
+        
         To_inv = np.eye(4)
         To_inv[:3,:3] = np.linalg.inv(T[:3,:3])
-
-        dT = self.T_base_robot @ drotation_z(q[0]) @ translation_z(self.l[0]) @ translation_x(self.l[1]) @ rotation_y(q[1]) @ translation_x(self.l[2]) @ rotation_y(q[2]) @ translation_x(self.l[3]) @ rotation_x(q[3]) @ translation_x(self.l[4]) @ rotation_y(q[4]) @ rotation_x(q[5]) @ translation_x(self.l[5]) @ self.T_tool_robot @ To_inv
+        
+        dT = T_base @ rz(q[0]) @ dtx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
         J[:,0] = self._get_jacobian_column(dT)
 
-        dT = self.T_base_robot @ rotation_z(q[0]) @ translation_z(self.l[0]) @ translation_x(self.l[1]) @ drotation_y(q[1]) @ translation_x(self.l[2]) @ rotation_y(q[2]) @ translation_x(self.l[3]) @ rotation_x(q[3]) @ translation_x(self.l[4]) @ rotation_y(q[4]) @ rotation_x(q[5]) @ translation_x(self.l[5]) @ self.T_tool_robot @ To_inv
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ dty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
         J[:,1] = self._get_jacobian_column(dT)
 
-        dT = self.T_base_robot @ rotation_z(q[0]) @ translation_z(self.l[0]) @ translation_x(self.l[1]) @ rotation_y(q[1]) @ translation_x(self.l[2]) @ drotation_y(q[2]) @ translation_x(self.l[3]) @ rotation_x(q[3]) @ translation_x(self.l[4]) @ rotation_y(q[4]) @ rotation_x(q[5]) @ translation_x(self.l[5]) @ self.T_tool_robot @ To_inv
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ drx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
         J[:,2] = self._get_jacobian_column(dT)
 
-        dT = self.T_base_robot @ rotation_z(q[0]) @ translation_z(self.l[0]) @ translation_x(self.l[1]) @ rotation_y(q[1]) @ translation_x(self.l[2]) @ rotation_y(q[2]) @ translation_x(self.l[3]) @ drotation_x(q[3]) @ translation_x(self.l[4]) @ rotation_y(q[4]) @ rotation_x(q[5]) @ translation_x(self.l[5]) @ self.T_tool_robot @ To_inv
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ dry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
         J[:,3] = self._get_jacobian_column(dT)
 
-        dT = self.T_base_robot @ rotation_z(q[0]) @ translation_z(self.l[0]) @ translation_x(self.l[1]) @ rotation_y(q[1]) @ translation_x(self.l[2]) @ rotation_y(q[2]) @ translation_x(self.l[3]) @ rotation_x(q[3]) @ translation_x(self.l[4]) @ drotation_y(q[4]) @ rotation_x(q[5]) @ translation_x(self.l[5]) @ self.T_tool_robot @ To_inv
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ dtx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
         J[:,4] = self._get_jacobian_column(dT)
 
-        dT = self.T_base_robot @ rotation_z(q[0]) @ translation_z(self.l[0]) @ translation_x(self.l[1]) @ rotation_y(q[1]) @ translation_x(self.l[2]) @ rotation_y(q[2]) @ translation_x(self.l[3]) @ rotation_x(q[3]) @ translation_x(self.l[4]) @ rotation_y(q[4]) @ drotation_x(q[5]) @ translation_x(self.l[5]) @ self.T_tool_robot @ To_inv
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ drx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
         J[:,5] = self._get_jacobian_column(dT)
 
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ drz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
+        J[:,6] = self._get_jacobian_column(dT)
+        
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ dry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
+        J[:,7] = self._get_jacobian_column(dT)
+
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ dtx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
+        J[:,8] = self._get_jacobian_column(dT)
+
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ dtz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
+        J[:,9] = self._get_jacobian_column(dT)
+
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ drz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
+        J[:,10] = self._get_jacobian_column(dT)
+
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ drx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
+        J[:,11] = self._get_jacobian_column(dT)
+
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ dty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
+        J[:,12] = self._get_jacobian_column(dT)       
+
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ dtz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
+        J[:,13] = self._get_jacobian_column(dT)
+
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ drz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
+        J[:,14] = self._get_jacobian_column(dT)
+
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ dry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
+        J[:,15] = self._get_jacobian_column(dT)
+
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ dtz(pi_0[16]) @ rz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
+        J[:,16] = self._get_jacobian_column(dT)
+
+        dT = T_base @ rz(q[0]) @ tx(self.d[1]+pi_0[0]) @ ty(pi_0[1]) @ rx(pi_0[2]) @ ry(q[1]+pi_0[3]) @ tx(pi_0[4]) @ rx(pi_0[5]) @ rz(pi_0[6]) @ ry(q[2]+pi_0[7]) @ tx(self.d[5]+pi_0[8]) @ tz(self.d[4]+pi_0[9]) @ rz(pi_0[10]) @ rx(q[3]+pi_0[11]) @ ty(pi_0[12]) @ tz(pi_0[13]) @ rz(pi_0[14]) @ ry(q[4] + pi_0[15]) @ tz(pi_0[16]) @ drz(pi_0[17]) @ rx(q[5]) @ T_tool @ To_inv
+        J[:,17] = self._get_jacobian_column(dT)
+
         return J
-
-    def calc_skew(self, q):
-        A =  [  self.T_base_robot,
-                rotation_z(q[0]) @ translation_z(self.l[0]) @ translation_x(self.l[1]),
-                rotation_y(q[1]) @ translation_x(self.l[2]),
-                rotation_y(q[2]) @ translation_x(self.l[3]),
-                rotation_x(q[3]) @ translation_x(self.l[4]),
-                rotation_y(q[4]),
-                rotation_x(q[5]) @ translation_x(self.l[5]) @ self.T_tool_robot]
-        # calculate O, U vectors
-        O = []
-        U = []
-        # z y y x y x
-        u_rotation_joints_cols = [2, 1, 1, 0, 1, 0]
-        T0i = np.eye(4)
-        for i in range(6):
-            T0i = T0i @ A[i]
-            O.append(T0i[:3,3])
-            U.append(T0i[:3, u_rotation_joints_cols[i]])
-        T0i = T0i @ A[6]
-        O.append(T0i[:3,3])
-        J = np.zeros((6,6))
-        for i in range(6):
-            J[:3,i] = np.cross((U[i]).reshape((1,3)), (O[6] - O[i]).reshape((1,3))).T.squeeze()
-            J[3:,i] = U[i]
-        return J
-
-    def calc_sympolic(self, q):
-        # Just to know which method works fine from the first three elements of each jacobian -> it appeared that the numerical derivatives has a problem (fixed)
-        q = q.squeeze()
-        # use sympy to calculate symbolically
-        def sp_translation_x(l):
-            return np.array([[1,0,0, l],
-                            [0,1,0, 0],
-                            [0,0,1, 0],
-                            [0,0,0, 1]])
-
-        def sp_translation_y(l):
-            return np.array([[1,0,0, 0],
-                            [0,1,0, l],
-                            [0,0,1, 0],
-                            [0,0,0, 1]])
-
-        def sp_translation_z(l):
-            return np.array([[1,0,0, 0],
-                            [0,1,0, 0],
-                            [0,0,1, l],
-                            [0,0,0, 1]])
-
-        def sp_rotation_x(theta):
-            return np.array([[1,         0,          0, 0],
-                            [0,sp.cos(theta),-sp.sin(theta), 0],
-                            [0,sp.sin(theta), sp.cos(theta), 0],
-                            [0,         0,          0, 1]])
-
-
-        def sp_rotation_y(theta):
-            return np.array([[sp.cos(theta) ,0,sp.sin(theta), 0],
-                            [0          ,1,         0, 0],
-                            [-sp.sin(theta),0,sp.cos(theta), 0],
-                            [0          ,0,         0, 1]])
-
-        def sp_rotation_z(theta):
-            return np.array([[sp.cos(theta),-sp.sin(theta),0, 0],
-                            [sp.sin(theta), sp.cos(theta),0, 0],
-                            [0         ,0          ,1, 0],
-                            [0         ,0          ,0, 1]])
-
-        q0, q1, q2, q3, q4, q5 = sp.symbols("q0 q1 q2 q3 q4 q5", real=True)
-        l0, l1, l2, l3, l4, l5 = sp.symbols("l0 l1 l2 l3 l4 l5", real=True)
-        mat = sp.Matrix
-
-        T = mat(self.T_base_robot) @ mat(sp_rotation_z(q0)) @ mat(sp_translation_z(l0)) @ mat(sp_translation_x(l1)) @ mat(sp_rotation_y(q1)) @ mat(sp_translation_x(l2)) @ mat(sp_rotation_y(q2)) @ mat(sp_translation_x(l3)) @ mat(sp_rotation_x(q3)) @ mat(sp_translation_x(l4)) @ mat(sp_rotation_y(q4)) @ mat(sp_rotation_x(q5)) @ mat(sp_translation_x(l5)) @ mat(self.T_tool_robot)
-
-        J = np.zeros((6,6))
-        for i in range(3):
-            J[i,0] = T[i,3].diff(q0).subs({q0:q[0], q1:q[1], q2:q[2], q3:q[3], q4:q[4], q5:q[5],
-                                    l0:self.l[0], l1:self.l[1], l2:self.l[2], l3:self.l[3], l4:self.l[4], l5:self.l[5]})
-            J[i,1] = T[i,3].diff(q1).subs({q0:q[0], q1:q[1], q2:q[2], q3:q[3], q4:q[4], q5:q[5],
-                                    l0:self.l[0], l1:self.l[1], l2:self.l[2], l3:self.l[3], l4:self.l[4], l5:self.l[5]})        
-            J[i,2] = T[i,3].diff(q2).subs({q0:q[0], q1:q[1], q2:q[2], q3:q[3], q4:q[4], q5:q[5],
-                                    l0:self.l[0], l1:self.l[1], l2:self.l[2], l3:self.l[3], l4:self.l[4], l5:self.l[5]})
-            J[i,3] = T[i,3].diff(q3).subs({q0:q[0], q1:q[1], q2:q[2], q3:q[3], q4:q[4], q5:q[5],
-                                    l0:self.l[0], l1:self.l[1], l2:self.l[2], l3:self.l[3], l4:self.l[4], l5:self.l[5]})
-            J[i,4] = T[i,3].diff(q4).subs({q0:q[0], q1:q[1], q2:q[2], q3:q[3], q4:q[4], q5:q[5],
-                                    l0:self.l[0], l1:self.l[1], l2:self.l[2], l3:self.l[3], l4:self.l[4], l5:self.l[5]})
-            J[i,5] = T[i,3].diff(q5).subs({q0:q[0], q1:q[1], q2:q[2], q3:q[3], q4:q[4], q5:q[5],
-                                    l0:self.l[0], l1:self.l[1], l2:self.l[2], l3:self.l[3], l4:self.l[4], l5:self.l[5]})
-        # print(J)
-        return J
-
         
 if __name__ == "__main__":
-    jacobian = Jacobian()
+    from robot import FANUC_R_2000i_configs
+    jacobian = Jacobian(robot_configs=FANUC_R_2000i_configs)
 
     q = np.zeros((6,1))
 
-    q[1] = np.pi/4
-    skew = jacobian.calc_skew(q)
+    q[1] = np.pi_0/4
     numerical = jacobian.calc_numerical(q)
-    print("Skew:")
-    print(skew)
-    print("----------------")
     print("Numerical Derivatives:")
     print(numerical)
     print("----------------")
-
-    print(calc_error(numerical, skew))
-
-    # symbolic = jacobian.calc_sympolic(q)
-    # print("Symbolic")
-    # print(symbolic)

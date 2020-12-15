@@ -1,10 +1,26 @@
 from utils import *
 import visualization as visual
 
-class KUKA_KR10_R1100_2:
+class FANUC_R_2000i_configs:
+    # TODO: change static methods to class variables
+    @staticmethod
+    def get_links_dimensions():
+        return [400,25,560,25,515,90]
+
+    @staticmethod
+    def get_joints_limits():
+        deg = [(-170, 170), (-190, 45), (-120, 156), (-185, 185), (-120, 120), (-350, 350)]
+        rad = []
+        for (i,j) in deg:
+            rad.append(((i*np.pi/180), (j*np.pi/180)))
+        return rad
+
+class FANUC_R_2000i:
     def __init__(self, T_base=None, T_tool=None):
-        self.links_dimensions = KUKA_KR10_R1100_2_configs.get_links_dimensions()
-        self.joint_limits = KUKA_KR10_R1100_2_configs.get_joints_limits()
+        self.num_joints = 6
+        self.robot_configs = FANUC_R_2000i_configs
+        self.links_dimensions = self.robot_configs.get_links_dimensions()
+        self.joint_limits = self.robot_configs.get_joints_limits()
         self.T_base = translation_x(0) if T_base is None else T_base
         self.T_tool = translation_x(0) if T_tool is None else T_tool
     
@@ -107,59 +123,15 @@ class KUKA_KR10_R1100_2:
                 return T
             return T[-1]    # end_effector
 
-    def jacobian(self, q, method="skew"):
+    def jacobian(self, q, T_base=None, T_tool=None):
         from Jacobian import Jacobian
-        jacobian = Jacobian(T_base=self.T_base, T_tool=self.T_tool)
-        if(method == "skew"):
-            return jacobian.calc_skew(q)
-        elif(method == "numerical"):
-            return jacobian.calc_numerical(q)
+        T_base = self.T_base if T_base is None else T_base
+        T_tool = self.T_tool if T_tool is None else T_tool
+        jacobian = Jacobian(robot_configs=self.robot_configs, T_base=T_base, T_tool=T_tool)
+        return jacobian.calc_numerical(q)
     
-    def check_singularity(self, q, jacobian_method="numerical", singularity_method="rank", debug=True):
-        J = self.jacobian(q, method=jacobian_method)
-        singularity_flag = False
-        u, s, v = np.linalg.svd(J)
-        eps = 1e-15
-
-        if(singularity_method == "determinant"):
-            if(abs(np.linalg.det(J)) <= eps):
-                singularity_flag = True
-        
-        if(singularity_method == "SVD"):
-            if(min(s) <= eps):
-                singularity_flag = True
-        
-        if(singularity_method == "rank"):
-            if(np.linalg.matrix_rank(J) < 6):
-                singularity_flag = True
-
-        if(debug == True):
-            print("Checking Singularity ...")
-            print(f"Configuration (q): {q}")
-            # print(f"Jacobian (J): {J}")
-            print(f"SVD: s: {s}, minimum value: {min(s)}")
-            print(f"Determinant (det(J)): {np.linalg.det(J)}")
-            print(f"Rank (rank(J)): {np.linalg.matrix_rank(J)}")
-            print(f"Result: This configuration is {'a Singular' if singularity_flag == True else 'Not a Singular'}")
-        return singularity_flag
-class KUKA_KR10_R1100_2_configs:
-    @staticmethod
-    def get_links_dimensions():
-        return [400,25,560,25,515,90]
-
-    @staticmethod
-    def get_joints_limits():
-        deg = [(-170, 170), (-190, 45), (-120, 156), (-185, 185), (-120, 120), (-350, 350)]
-        rad = []
-        for (i,j) in deg:
-            rad.append(((i*np.pi/180), (j*np.pi/180)))
-        return rad
-
 if __name__ == "__main__":
-    robot = KUKA_KR10_R1100_2()
+    robot = FANUC_R_2000i()
     q = np.zeros((6,1))
-    skew = robot.jacobian(q, method="skew")
-    numerical = robot.jacobian(q, method="numerical")
-    print(skew)
+    numerical = robot.jacobian(q)
     print(numerical)
-    print(calc_error(numerical, skew))

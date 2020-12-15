@@ -2,9 +2,10 @@ import numpy as np
 import vpython as vp
 
 class RobotVisualization_vpython:
-    def __init__(self, rate=100, scale=1,radius={"link":0.005, "joint":0.006, "node":0.008, "axe":0.003, "trajectory_trail":0.004}, origin=[0.0, 0.0, 0.0], axe_length=0.2):
+    def __init__(self, rate=100, scale=1,radius={}, origin=[0.0, 0.0, 0.0], axe_length=0.2):
         self.rate = rate
-        self.radius = radius
+        self.radius = {**{"link":0.005, "joint":0.006, "node":0.008, "axe":0.003, "trajectory_trail":0.004},
+                       **radius}
         self.axe_color = vp.vector(1, 1, 1)
         self.link_color = vp.vector(242/255, 92/255, 25/255)
         self.joint_color = vp.vector(1,1,1)
@@ -51,7 +52,8 @@ class RobotVisualization_vpython:
                 c.append(vp.text(text=text, pos=v,color=self.text_color, height=0.03))
             elif(shape_type == "time"):
                 # text= "Steps: {:}, Seconds: {:.3f}".format(obj[1], obj[2])
-                text= "Steps: {:}".format(obj[1], obj[2])
+                # text= "Steps: {:}".format(obj[1], obj[2])
+                text= "Steps: {:}".format(obj[1])
                 c.append(vp.label(text=text, pos=self.time_text_pos, align="right", color=self.time_color))
                 # c.append(vp.text(text=text, pos=self.time_text_pos, align="right", height=self.time_text_height, billboard=True, emissive=True, color=self.time_color))
             else:   # link, axe
