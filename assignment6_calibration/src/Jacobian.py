@@ -98,14 +98,3 @@ class Jacobian:
 
         return J
         
-if __name__ == "__main__":
-    from robot import FANUC_R_2000i_configs
-    jacobian = Jacobian(robot_configs=FANUC_R_2000i_configs)
-
-    q = np.zeros((6,1))
-
-    q[1] = np.pi_0/4
-    numerical = jacobian.calc_numerical(q)
-    print("Numerical Derivatives:")
-    print(numerical)
-    print("----------------")
