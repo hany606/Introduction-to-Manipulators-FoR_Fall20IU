@@ -1,5 +1,20 @@
 from utils import *
 import visualization as visual
+from utils import translation_x as tx
+from utils import translation_y as ty
+from utils import translation_z as tz
+
+from utils import rotation_x as rx
+from utils import rotation_y as ry
+from utils import rotation_z as rz
+
+from utils import dtranslation_x as dtx
+from utils import dtranslation_y as dty
+from utils import dtranslation_z as dtz
+
+from utils import drotation_x as drx
+from utils import drotation_y as dry
+from utils import drotation_z as drz
 
 class FANUC_R_2000i_configs:
     # TODO: change static methods to class variables
@@ -19,7 +34,7 @@ class FANUC_R_2000i:
     def __init__(self, T_base=None, T_tool=None):
         self.num_joints = 6
         self.robot_configs = FANUC_R_2000i_configs
-        self.links_dimensions = self.robot_configs.get_links_dimensions()
+        self.d = self.robot_configs.get_links_dimensions()
         self.joint_limits = self.robot_configs.get_joints_limits()
         self.T_base = translation_x(0) if T_base is None else T_base
         self.T_tool = translation_x(0) if T_tool is None else T_tool
@@ -107,27 +122,15 @@ class FANUC_R_2000i:
                 # print(frame)
                 vis.render_frame(frame, axis=False)
 
-    def forward_kinematics(self, q, plot=True, debug=True, return_all=False):
-            from FK import FK
-            T = FK(q, T_base=self.T_base, T_tool=self.T_tool, return_frames=(plot or debug or return_all))
-            
-            if(debug == True):
-                self.print_frames(T)    # just print the result in a good way
-            if(plot == True):
-                self.plot_robot(T)    # plot the result
-            if(return_all == True):
-                return T
-            # We need only to return the end-effector
-            if(not(plot or debug) == True):
-                # print(T)    # only end_effector
-                return T
-            return T[-1]    # end_effector
-
+    def get_T_robot_reducible(self, q, pi):
+        T_robot = rz(q[0]) @ tx(self.d[1]+pi[0]) @ ty(pi[1]) @ rx(pi[2]) @ ry(q[1]+pi[3]) @ tx(pi[4]) @ rx(pi[5]) @ rz(pi[6]) @ ry(q[2]+pi[7]) @ tx(self.d[5]+pi[8]) @ tz(self.d[4]+pi[9]) @ rz(pi[10]) @ rx(q[3]+pi[11]) @ ty(pi[12]) @ tz(pi[13]) @ rz(pi[14]) @ ry(q[4] + pi[15]) @ tz(pi[16]) @ rz(pi[17]) @ rx(q[5])
+        return T_robot
+    
     def jacobian(self, q, T_base=None, T_tool=None):
         from Jacobian import Jacobian
         T_base = self.T_base if T_base is None else T_base
         T_tool = self.T_tool if T_tool is None else T_tool
-        jacobian = Jacobian(robot_configs=self.robot_configs, T_base=T_base, T_tool=T_tool)
+        jacobian = Jacobian(robot=self.robot, T_base=T_base, T_tool=T_tool)
         return jacobian.calc_numerical(q)
     
 if __name__ == "__main__":

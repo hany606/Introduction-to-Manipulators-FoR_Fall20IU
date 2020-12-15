@@ -20,6 +20,8 @@ from utils import drotation_x as drx
 from utils import drotation_y as dry
 from utils import drotation_z as drz
 
+# from tqdm import tqdm
+
 class Calibration:
     def __init__(self, robot,
                        dataset_file="calibration_dataset.mat",
@@ -33,9 +35,9 @@ class Calibration:
         self.num_joints = robot.num_joints
         self.dimension = 3
         self.num_unknown_parameters = 4+8+6 # Only the robot # 27: including T_base and T_tool
+        self.robot = robot
         
-        
-        self.jacobian = Jacobian(robot.robot_configs)
+        self.jacobian = Jacobian(self.robot)
         
         self.pi_0 = np.zeros((self.num_unknown_parameters, 1))#? # TODO
         
@@ -56,6 +58,9 @@ class Calibration:
     def read_mat_file(self):
         self.dataset_raw = scipy.io.loadmat(self.dataset_file)
         
+    
+    def _rescale(self, vec):
+        return [vec[0]*1000, vec[1]*1000, vec[2]*1000,]
     def splitter(self):
         self.configruations = np.empty((self.num_configs, self.num_samples, self.num_joints, 1))
         self.dataset = np.empty((self.num_configs, self.num_samples, self.num_reference_points, self.dimension))
@@ -63,7 +68,7 @@ class Calibration:
             for j in range(self.num_samples):
                 self.configruations[i, j] = np.array(self.dataset_raw["q"][j+self.num_samples*i]).reshape((self.num_joints, 1))
                 for k in range(self.num_reference_points):
-                    self.dataset[i, j, k] = self.dataset_raw[self.reference_points_tags[k]][j+self.num_samples*i]
+                    self.dataset[i, j, k] = self._rescale(self.dataset_raw[self.reference_points_tags[k]][j+self.num_samples*i])
                     # print(f"{i}, {j}, {k} <- {self.reference_points_tags[k]}{j+self.num_samples*i}")
         # return(self.dataset[0,0])
 
@@ -112,7 +117,7 @@ class Calibration:
             
             
     # Use q, pi (error) in order to base and tool tranformations             
-    def _step1(self, pi):                    
+    def _step1(self):                    
         sum1 = np.zeros((6+3*self.num_reference_points,6+3*self.num_reference_points))
         sum2 = np.zeros((6+3*self.num_reference_points,1))
         # sum
@@ -121,7 +126,7 @@ class Calibration:
             for j in range(self.num_samples):
                 delta_p_i = np.empty((3*self.num_reference_points,1))
                 q = self.configruations[i, j].copy()
-                self.T_robot = rz(q[0]) @ tx(self.d[1]+pi[0]) @ ty(pi[1]) @ rx(pi[2]) @ ry(q[1]+pi[3]) @ tx(pi[4]) @ rx(pi[5]) @ rz(pi[6]) @ ry(q[2]+pi[7]) @ tx(self.d[5]+pi[8]) @ tz(self.d[4]+pi[9]) @ rz(pi[10]) @ rx(q[3]+pi[11]) @ ty(pi[12]) @ tz(pi[13]) @ rz(pi[14]) @ ry(q[4] + pi[15]) @ tz(pi[16]) @ rz(pi[17]) @ rx(q[5])
+                self.T_robot = self.robot.get_T_robot_reducible(q, self.pi)
                 p_robot_i = get_position(self.T_robot).copy().reshape((3,1))
                 R_robot_i = get_rotation(self.T_robot).copy().reshape((3,3))
                 # Calculate A matrix
@@ -159,7 +164,8 @@ class Calibration:
             T_tool[i] = T_tool_j
         return T_base, T_tool
     
-    def _step2(self, T_base, T_tool, pi):
+    # Use T_base, T_tool, q, pi
+    def _step2(self):
         sum1 = np.zeros((self.num_unknown_parameters,self.num_unknown_parameters))
         sum2 = np.zeros((self.num_unknown_parameters,1))
         for i in range(self.num_configs):
@@ -167,7 +173,7 @@ class Calibration:
                 q = self.configruations[i, j].copy()
                 # Calculate identification Jacobian J_pi
                 for k in range(self.num_reference_points):
-                    jacobian_pi = self.jacobian.calc_identification_jacobian(T_base=T_base, T_tool=T_tool[k], q=q, pi=pi, pi_0=self.pi_0)
+                    jacobian_pi = self.jacobian.calc_identification_jacobian(T_base=self.T_base, T_tool=self.T_tool[k], q=q, pi=self.pi, pi_0=self.pi_0)
                     jacobian_pi_jp = jacobian_pi[:3].reshape((3, self.num_unknown_parameters))
                     delta_p_i_j = (self.dataset[i,j,k].copy() - get_position(self.T_robot).copy()).reshape((3,1))
                     
@@ -181,30 +187,48 @@ class Calibration:
         
         return delta_pi
     
+    def _terminamtion_criteria(self, delta_pi, epsilon):
+        stopping_sum = 0
+        for i in range(self.num_configs):
+            for j in range(self.num_samples):
+                q = self.configruations[i, j].copy()
+                # Calculate identification Jacobian J_pi
+                for k in range(self.num_reference_points):
+                    jacobian_pi = self.jacobian.calc_identification_jacobian(T_base=self.T_base, T_tool=self.T_tool[k], q=q, pi=self.pi, pi_0=self.pi_0)
+                    jacobian_pi_jp = jacobian_pi[:3].reshape((3, self.num_unknown_parameters))
+                    delta_p_i_j = (self.dataset[i,j,k].copy() - get_position(self.T_robot).copy()).reshape((3,1))
+                    term = jacobian_pi_jp.dot(delta_pi) - delta_p_i_j
+                    stopping_sum += term.T @ term
+        print(stopping_sum)
+        if(stopping_sum[0][0] < epsilon):
+            return True
+        return False
+    
     def calibrate(self, max_num_steps=1000, alpha=0.001, epsilon=1e-8):
         steps = 0
         # define pi
-        pi = self.pi_0
+        self.pi = self.pi_0
         while True:
-            T_base, T_tool = self._step1(pi)
-            print("step1")
-            delta_pi = self._step2(T_base, T_tool, pi)
-            print("step2")
-            pi += alpha*delta_pi
+            print(f"{steps+1}th iteration:")
+            self.T_base, self.T_tool = self._step1()
+            delta_pi = self._step2()
+            self.pi += alpha*delta_pi
             
-            print(delta_pi)
-            if(steps >= max_num_steps or np.all(np.abs(delta_pi) <= epsilon)):
-                break
-            print("----------------")
+            print("Pi:")            
+            print(self.pi)
             steps += 1
+            if(steps >= max_num_steps or self._terminamtion_criteria(delta_pi, epsilon)):
+                break
+        print("-------------------------")
+        print(self.pi)
 
-            
 if __name__ == "__main__":
     from robot import FANUC_R_2000i
     robot = FANUC_R_2000i()
     calib = Calibration(robot=robot)
-    calib.calibrate(max_num_steps=5)
+    calib.calibrate(alpha=0.05)
     # mat = calib.get_dataset_raw()
+    # print(mat)
     # calib.visualize()
     
     # sample = calib.splitter()
