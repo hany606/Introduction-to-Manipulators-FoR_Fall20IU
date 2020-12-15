@@ -125,16 +125,3 @@ class FANUC_R_2000i:
     def get_T_robot_reducible(self, q, pi):
         T_robot = rz(q[0]) @ tx(self.d[1]+pi[0]) @ ty(pi[1]) @ rx(pi[2]) @ ry(q[1]+pi[3]) @ tx(pi[4]) @ rx(pi[5]) @ rz(pi[6]) @ ry(q[2]+pi[7]) @ tx(self.d[5]+pi[8]) @ tz(self.d[4]+pi[9]) @ rz(pi[10]) @ rx(q[3]+pi[11]) @ ty(pi[12]) @ tz(pi[13]) @ rz(pi[14]) @ ry(q[4] + pi[15]) @ tz(pi[16]) @ rz(pi[17]) @ rx(q[5])
         return T_robot
-    
-    def jacobian(self, q, T_base=None, T_tool=None):
-        from Jacobian import Jacobian
-        T_base = self.T_base if T_base is None else T_base
-        T_tool = self.T_tool if T_tool is None else T_tool
-        jacobian = Jacobian(robot=self.robot, T_base=T_base, T_tool=T_tool)
-        return jacobian.calc_numerical(q)
-    
-if __name__ == "__main__":
-    robot = FANUC_R_2000i()
-    q = np.zeros((6,1))
-    numerical = robot.jacobian(q)
-    print(numerical)

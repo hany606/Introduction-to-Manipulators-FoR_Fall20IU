@@ -4,8 +4,8 @@ import numpy as np
 
 robot = FANUC_R_2000i()
 calib = Calibration(robot=robot)
-# calib.calibrate(alpha=0.7)
-suffix = " (0)"#""
+calib.calibrate(alpha=0.05)
+suffix = ""
 pi = np.load(f"pi{suffix}.npy")
 T_base = np.load(f"T_base{suffix}.npy")
 T_tool = np.load(f"T_tool{suffix}.npy")
@@ -14,10 +14,3 @@ print(f"Pi:\n{np.array2string(pi, separator=', ')}")
 print(f"T_base:\n{np.array2string(T_base, separator=', ')}")
 print(f"T_tool:\n{np.array2string(T_tool, separator=', ')}")
 calib.RMS_report(pi=pi, T_base=T_base, T_tool=T_tool)
-# mat = calib.get_dataset_raw()
-# print(mat)
-# calib.visualize()
-
-# sample = calib.splitter()
-# print(sample[0] - mat["mA"][0], sample[1] - mat["mB"][0], sample[2] - mat["mC"][0])
-

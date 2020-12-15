@@ -2,6 +2,7 @@ import scipy.io
 import numpy as np
 import visualization as visual
 import time
+from math import sqrt
 from Jacobian import Jacobian
 from utils import *
 from utils import translation_x as tx
@@ -38,11 +39,11 @@ class Calibration:
         self.robot = robot
         
         self.jacobian = Jacobian(self.robot)
-        
-        self.pi_0 = np.zeros((self.num_unknown_parameters, 1))#? # TODO
-        
+                
         self.d = robot.robot_configs.get_links_dimensions()
 
+        self.pi_0 = np.zeros((self.num_unknown_parameters, 1))
+        # self.pi_0 = np.array([self.d[1], 0,0,0,0,0,0,0, self.d[5], self.d[4], 0, 0,0,0,0,0,0,0], dtype=np.float).reshape((self.num_unknown_parameters, 1)) 
         
         self.visualization_radius = {"node":0.003}
         self.visualization_scale = 0.1
@@ -214,19 +215,73 @@ class Calibration:
             delta_pi = self._step2()
             self.pi += alpha*delta_pi
             
-            print("Pi:")            
-            print(self.pi)
+            if(steps % 10 == 0):
+                print(f"Pi:\n{self.pi}")
+                np.save("pi.npy", self.pi)
+                print(f"T_base:\n{self.T_base}")
+                np.save("T_base.npy", self.T_base)
+                print(f"T_tool:\n{self.T_tool}")
+                np.save("T_tool.npy", self.T_tool)
+            
             steps += 1
             if(steps >= max_num_steps or self._terminamtion_criteria(delta_pi, epsilon)):
                 break
         print("-------------------------")
         print(self.pi)
+        
+    def RMS_report(self, pi=None, T_base=None, T_tool=None):
+        pi = self.pi if pi is None else pi
+        T_base = self.T_base if T_base is None else T_base
+        T_tool = self.T_tool if T_tool is None else T_tool
+        max_dist = 0
+        error = 0 #sqrt(1/n sum(^2))
+        error_coordinates = np.zeros(self.dimension)
+        max_err_coordinates = np.zeros(self.dimension)
+        for i in range(self.num_configs):
+            for j in range(self.num_samples):
+                q = self.configruations[i, j].copy()
+                for k in range(self.num_reference_points):
+                    T_robot = self.robot.get_T_robot_reducible(q, pi)
+                    T = T_base @ T_robot @ T_tool[k]
+                    new_pos = get_position(T).copy()
+                    pos = self.dataset[i, j, k].copy()
+                    
+                    dist = np.linalg.norm(new_pos - pos)
+                    max_dist = max(max_dist, dist)
+                    error += dist**2
+                    
+                    for e in range(self.dimension):
+                        err = abs(new_pos[e] - pos[e])
+                        error_coordinates[e] += err
+                        max_err_coordinates[e] = max(max_err_coordinates[e], err)
+        N = (self.num_configs*self.num_samples*self.num_reference_points)
+        error = sqrt(error/N)
+        print(f"RMS Error: {error}")
+        print(f"Max Distance error (mm): {max_dist}")
+        print("-------------------------")
+        
+        tags = ['x', 'y', 'z']
+        for e in range(self.dimension):
+            error_coordinates[e] = sqrt(error_coordinates[e]/N)
+            print(f"RMS Error for {tags[e]}-coordinate: {error_coordinates[e]}")
+            print(f"Max error for {tags[e]}-coordinate (mm): {max_err_coordinates[e]}")
+            print("-------------------------")
+        return error
 
 if __name__ == "__main__":
     from robot import FANUC_R_2000i
     robot = FANUC_R_2000i()
     calib = Calibration(robot=robot)
-    calib.calibrate(alpha=0.05)
+    calib.calibrate(alpha=0.7)
+    suffix = " (0)"#" (1)"
+    pi = np.load(f"pi{suffix}.npy")
+    T_base = np.load(f"T_base{suffix}.npy")
+    T_tool = np.load(f"T_tool{suffix}.npy")
+    np.set_printoptions(precision=3, suppress=True,)
+    print(f"Pi:\n{np.array2string(pi, separator=', ')}")
+    print(f"T_base:\n{np.array2string(T_base, separator=', ')}")
+    print(f"T_tool:\n{np.array2string(T_tool, separator=', ')}")
+    calib.RMS_report(pi=pi, T_base=T_base, T_tool=T_tool)
     # mat = calib.get_dataset_raw()
     # print(mat)
     # calib.visualize()
