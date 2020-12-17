@@ -43,9 +43,3 @@ plot_u(ut, n=3)
 (q0, dq0) = (np.array([0, 0, 0]), np.array([0, 0, 0]))
 qt, dqt, ddqt = dyn_ne.direct(q0, dq0, ut, dt=1/1000)
 plot_trajectory([qt, dqt, ddqt],n=3, dt=1/1000)
-
-print("--------------------- LE ---------------------")
-(q0, dq0) = (np.array([0, 0, 0]), np.array([0, 0, 0]))
-dt= 1/1000
-qt, dqt, ddqt = dyn_le.direct(q0, dq0, ut, dt=1/1000)
-plot_trajectory([qt, dqt, ddqt],n=3, dt=dt)

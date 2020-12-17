@@ -75,7 +75,7 @@ class NewtonEuler:
                              np.array([self.l[1]+q[2], 0, 0]).reshape(3,1).astype(np.float64),  # r_1,2
                              np.array([self.l[2], 0, 0]).reshape(3,1).astype(np.float64),  # r_2,3
                              ]  
-            z_i = [None, np.array([0, 0, 1]).reshape(3,1), np.array([0, 0, 0]).reshape(3,1), np.array([0, 0, 0]).reshape(3,1)]
+            z_i = [None, np.array([1, 0, 0]).reshape(3,1), np.array([1, 0, 0]).reshape(3,1), np.array([0, 0, 1]).reshape(3,1)]
             # AR (Accelerations recursion)
             # input: q, dq, ddq
             # output: w, dw, a, ac
