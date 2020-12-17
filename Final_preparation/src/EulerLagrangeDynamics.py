@@ -18,7 +18,7 @@ class EulerLagrange2:
         self.I1, self.I2 = sp.symbols("I1 I2", real=True)
         self.m1, self.m2 = sp.symbols("m1 m2", real=True)
         self.g = sp.symbols("g", real=True)
-        self.g_vector = self.mat(([[0], [-self.g], [0]]))
+        self.g_vector = self.mat(([[0], [-1*self.g], [0]]))
         
         self.zero_vec = self.mat(np.array([0,0,0]).reshape(3,1))
         # Transition matrices
