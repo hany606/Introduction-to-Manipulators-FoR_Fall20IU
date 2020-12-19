@@ -18,7 +18,7 @@ ddq_max = [10, 5, 5]
 traj_ptp, time = TrajectoryPlanning.PTP(q0=q1.copy(), qf=q2.copy(), f=f, dq_max=dq_max, ddq_max=ddq_max, debug=True)
 print(f"Setpoints: Starting {q1}, Final {q2}")
 print(f"Goal (Final) {q2}\nReal (Final): {traj_ptp[-1,:,0]}")
-TrajectoryPlanning.plot_trajectory(traj=traj_ptp, title="PTP - Trapezoidal", time=time)
+TrajectoryPlanning.plot_trajectory(traj=traj_ptp, title="PTP - Trapezoidal", time=time, dt=1/1000)
 
 print("-----------------Task3-----------------")
 print("--------------------- Polynomial 3rd order ---------------------")
@@ -26,7 +26,7 @@ print("--------------------- Polynomial 3rd order ---------------------")
 t0,tf = 0, 2
 (dq0, dqf) = ([0,0,0], [0,0,0])
 traj_poly3 = TrajectoryPlanning.polynomial3(t0, q0, dq0, tf, qf, dqf)
-TrajectoryPlanning.plot_trajectory(traj=traj_poly3, title="Polynomial - 3rd Order")
+TrajectoryPlanning.plot_trajectory(traj=traj_poly3, title="Polynomial - 3rd Order", dt=1/1000)
 
 qt, dqt, ddqt = TrajectoryPlanning.extract_traj(traj_poly3)
 ut = dyn_le.inverse(qt, dqt, ddqt)

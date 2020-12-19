@@ -457,7 +457,7 @@ if __name__ == "__main__":
     traj_ptp, time = TrajectoryPlanning.PTP(q0=q1.copy(), qf=q2.copy(), f=f, dq_max=dq_max, ddq_max=ddq_max, debug=True)
     print(f"Setpoints: Starting {q1}, Final {q2}")
     print(f"Goal (Final) {q2}\nReal (Final): {traj_ptp[-1,:,0]}")
-    TrajectoryPlanning.plot_trajectory(traj=traj_ptp, title="PTP - Trapezoidal", time=time)
+    TrajectoryPlanning.plot_trajectory(traj=traj_ptp, title="PTP - Trapezoidal", time=time, dt=1/1000)
 
     # TODO: Make visualization using FK
     # Ts = []
