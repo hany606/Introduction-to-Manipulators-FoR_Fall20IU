@@ -269,7 +269,7 @@ class Calibration:
                     error += dist**2
                     for e in range(self.dimension):
                         err = abs(new_pos[e] - pos[e])
-                        error_coordinates[e] += err
+                        error_coordinates[e] += err**2
                         max_err_coordinates[e] = max(max_err_coordinates[e], err)
         N = (self.num_configs*self.num_samples*self.num_reference_points)
         error = sqrt(error/N)
