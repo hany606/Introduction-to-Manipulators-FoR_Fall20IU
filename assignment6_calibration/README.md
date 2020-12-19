@@ -10,7 +10,7 @@ Manufacturing 35 (2015), 151–168.
 
 ## How to use?
 
-1. To print the report for the stored calibration data, run main.py:
+1. To print the report for the best stored calibration data, run main.py:
    ```bash
       python3 main.py
    ```
