@@ -27,7 +27,8 @@ class Calibration:
     def __init__(self, robot,
                        dataset_file="calibration_dataset.mat",
                        num_configs=24, num_samples=10, num_reference_points=3,
-                       reference_points_tags=["mA", "mB", "mC"]):
+                       reference_points_tags=["mA", "mB", "mC"],
+                       save_postfix=""):
         self.dataset_file = dataset_file
         self.num_configs = num_configs
         self.num_samples = num_samples
@@ -37,13 +38,14 @@ class Calibration:
         self.dimension = 3
         self.num_unknown_parameters = 4+8+6 # Only the robot # 27: including T_base and T_tool
         self.robot = robot
+        self.save_postfix=save_postfix
         
         self.jacobian = Jacobian(self.robot)
                 
         self.d = robot.robot_configs.get_links_dimensions()
 
-        self.pi_0 = np.zeros((self.num_unknown_parameters, 1))
-        # self.pi_0 = np.array([self.d[1], 0,0,0,0,0,0,0, self.d[5], self.d[4], 0, 0,0,0,0,0,0,0], dtype=np.float).reshape((self.num_unknown_parameters, 1)) 
+        # self.pi_0 = np.zeros((self.num_unknown_parameters, 1))
+        self.pi_0 = np.array([self.d[1], 0,0,0,0,0,0,0, self.d[5], self.d[4], 0, 0,0,0,0,0,0,0], dtype=np.float).reshape((self.num_unknown_parameters, 1)) 
         
         self.visualization_radius = {"node":0.003}
         self.visualization_scale = 0.1
@@ -61,7 +63,7 @@ class Calibration:
         
     
     def _rescale(self, vec):
-        return [vec[0]*1000, vec[1]*1000, vec[2]*1000,]
+        return [vec[0]*1000, vec[1]*1000, vec[2]*1000]
     def splitter(self):
         self.configruations = np.empty((self.num_configs, self.num_samples, self.num_joints, 1))
         self.dataset = np.empty((self.num_configs, self.num_samples, self.num_reference_points, self.dimension))
@@ -69,7 +71,8 @@ class Calibration:
             for j in range(self.num_samples):
                 self.configruations[i, j] = np.array(self.dataset_raw["q"][j+self.num_samples*i]).reshape((self.num_joints, 1))
                 for k in range(self.num_reference_points):
-                    self.dataset[i, j, k] = self._rescale(self.dataset_raw[self.reference_points_tags[k]][j+self.num_samples*i])
+                    original_scale = self.dataset_raw[self.reference_points_tags[k]][j+self.num_samples*i]
+                    self.dataset[i, j, k] = self._rescale(original_scale)
                     # print(f"{i}, {j}, {k} <- {self.reference_points_tags[k]}{j+self.num_samples*i}")
         # return(self.dataset[0,0])
 
@@ -141,6 +144,8 @@ class Calibration:
 
                         else:
                             A[k*3:k*3+3, 6+kk*3:6+kk*3+3] = np.zeros((3,3))
+                    # print(self.dataset[i,j,k])
+                    # print(get_position(self.T_base@self.T_robot@self.T_tool[k]))
                     delta_p_i_j = self.dataset[i,j,k].copy() - get_position(self.T_robot).copy()
                     delta_p_i[k*3:k*3+3] = delta_p_i_j.reshape(3,1)
                 # Calculate the 1st summation
@@ -172,6 +177,7 @@ class Calibration:
         for i in range(self.num_configs):
             for j in range(self.num_samples):
                 q = self.configruations[i, j].copy()
+                self.T_robot = self.robot.get_T_robot_reducible(q, self.pi)
                 # Calculate identification Jacobian J_pi
                 for k in range(self.num_reference_points):
                     jacobian_pi = self.jacobian.calc_identification_jacobian(T_base=self.T_base, T_tool=self.T_tool[k], q=q, pi=self.pi, pi_0=self.pi_0)
@@ -193,6 +199,7 @@ class Calibration:
         for i in range(self.num_configs):
             for j in range(self.num_samples):
                 q = self.configruations[i, j].copy()
+                self.T_robot = self.robot.get_T_robot_reducible(q, self.pi)
                 # Calculate identification Jacobian J_pi
                 for k in range(self.num_reference_points):
                     jacobian_pi = self.jacobian.calc_identification_jacobian(T_base=self.T_base, T_tool=self.T_tool[k], q=q, pi=self.pi, pi_0=self.pi_0)
@@ -200,32 +207,42 @@ class Calibration:
                     delta_p_i_j = (self.dataset[i,j,k].copy() - get_position(self.T_robot).copy()).reshape((3,1))
                     term = jacobian_pi_jp.dot(delta_pi) - delta_p_i_j
                     stopping_sum += term.T @ term
-        print(stopping_sum)
-        if(stopping_sum[0][0] < epsilon):
+        print(np.linalg.norm(stopping_sum))
+        if(np.linalg.norm(stopping_sum) < epsilon):
             return True
         return False
     
-    def calibrate(self, max_num_steps=1000, alpha=0.001, epsilon=1e-8):
+    def calibrate(self, max_num_steps=101, alpha=0.001, epsilon=1e-8):
         steps = 0
         # define pi
         self.pi = self.pi_0
+        self.T_base = np.eye(4)
+        self.T_tool = np.zeros((self.num_reference_points, 4, 4))
+        for i in range(self.num_reference_points):
+            self.T_tool[i,:,:] = np.eye(4)
         while True:
             print(f"{steps+1}th iteration:")
+            # return
             self.T_base, self.T_tool = self._step1()
+            # print("T_base")
+            # print(self.T_base)
+            # print("T_tool")
+            # print(self.T_tool)
             delta_pi = self._step2()
             self.pi += alpha*delta_pi
-            
+
             if(steps % 10 == 0):
                 print(f"Pi:\n{self.pi}")
-                np.save("pi.npy", self.pi)
+                np.save(f"pi{self.save_postfix}.npy", self.pi)
                 print(f"T_base:\n{self.T_base}")
-                np.save("T_base.npy", self.T_base)
+                np.save(f"T_base{self.save_postfix}.npy", self.T_base)
                 print(f"T_tool:\n{self.T_tool}")
-                np.save("T_tool.npy", self.T_tool)
+                np.save(f"T_tool{self.save_postfix}.npy", self.T_tool)
             
             steps += 1
             if(steps >= max_num_steps or self._terminamtion_criteria(delta_pi, epsilon)):
                 break
+            
         print("-------------------------")
         print(self.pi)
         
@@ -240,23 +257,23 @@ class Calibration:
         for i in range(self.num_configs):
             for j in range(self.num_samples):
                 q = self.configruations[i, j].copy()
+                T_robot = self.robot.get_T_robot_reducible(q, pi)
                 for k in range(self.num_reference_points):
-                    T_robot = self.robot.get_T_robot_reducible(q, pi)
                     T = T_base @ T_robot @ T_tool[k]
                     new_pos = get_position(T).copy()
                     pos = self.dataset[i, j, k].copy()
-                    
+                    # print(new_pos - pos)
+
                     dist = np.linalg.norm(new_pos - pos)
                     max_dist = max(max_dist, dist)
                     error += dist**2
-                    
                     for e in range(self.dimension):
                         err = abs(new_pos[e] - pos[e])
                         error_coordinates[e] += err
                         max_err_coordinates[e] = max(max_err_coordinates[e], err)
         N = (self.num_configs*self.num_samples*self.num_reference_points)
         error = sqrt(error/N)
-        print(f"RMS Error: {error}")
+        print(f"RMS Distance Error: {error}")
         print(f"Max Distance error (mm): {max_dist}")
         print("-------------------------")
         
@@ -268,15 +285,28 @@ class Calibration:
             print("-------------------------")
         return error
 
+
 if __name__ == "__main__":
     from robot import FANUC_R_2000i
     robot = FANUC_R_2000i()
+    d = robot.robot_configs.get_links_dimensions()
     calib = Calibration(robot=robot)
-    calib.calibrate(alpha=0.7)
-    suffix = " (0)"#" (1)"
-    pi = np.load(f"pi{suffix}.npy")
-    T_base = np.load(f"T_base{suffix}.npy")
-    T_tool = np.load(f"T_tool{suffix}.npy")
+    # calib.calibrate(alpha=0.07)
+    
+    postfix = " (5)"#" (0)"
+    
+    T_base = np.load(f"T_base{postfix}.npy")
+    # T_base = translation_x(0)
+    
+    T_tool = np.load(f"T_tool{postfix}.npy")
+    # T_tool[0,:3,3] = np.zeros((3,))
+    # T_tool[1,:3,3] = np.zeros((3,))
+    # T_tool[2,:3,3] = np.zeros((3,))
+    
+    pi = np.load(f"pi{postfix}.npy")
+    # pi = np.zeros((18, 1))
+    # pi = np.array([d[1], 0,0,0,0,0,0,0, d[5], d[4], 0, 0,0,0,0,0,0,0], dtype=np.float).reshape((18, 1)) 
+
     np.set_printoptions(precision=3, suppress=True,)
     print(f"Pi:\n{np.array2string(pi, separator=', ')}")
     print(f"T_base:\n{np.array2string(T_base, separator=', ')}")

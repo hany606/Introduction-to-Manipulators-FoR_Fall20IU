@@ -4,7 +4,7 @@ import numpy as np
 
 robot = FANUC_R_2000i()
 calib = Calibration(robot=robot)
-calib.calibrate(alpha=0.05)
+calib.calibrate(alpha=1)
 suffix = ""
 pi = np.load(f"pi{suffix}.npy")
 T_base = np.load(f"T_base{suffix}.npy")
