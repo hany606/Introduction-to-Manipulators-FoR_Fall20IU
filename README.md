@@ -25,7 +25,7 @@ This repository was made for assignments for "Fundamentals of Robotics" course a
 ![Configuration 4](https://github.com/hany606/FoR_Fall20IU/blob/main/assignment5_dynamics/imgs/config4.gif)
 
 
-6. [Calibration for a 6-DoF Fanuc manipulator (FANUC_R_2000i) which is being done by algorithms from the following literatures:](https://github.com/hany606/FoR_Fall20IU/tree/main/assignment5_trajectory_planning)
+6. [Calibration for a 6-DoF Fanuc manipulator (FANUC_R_2000i) which is being done by algorithms from the following literatures:](https://github.com/hany606/Introduction-to-Manipulators-FoR_Fall20IU/tree/main/assignment6_calibration)
 
 * Wu, Y. Optimal pose selection for the identification of geometric and elastostatic parameters of machining robots. PhD thesis, 2014.
 * Wu, Y., Klimchik, A., Caro, S., Furet, B., and Pashkevich, A.
